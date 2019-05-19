@@ -23,7 +23,7 @@ class TestPost():
         3. Verify the metadata against the predefined database elements
         """
         ret = client.post('/')
-        assert ret == 200
+        assert ret.status_code == 200
         data = ret.get_json()
         assert data['entries'] == 0
     
