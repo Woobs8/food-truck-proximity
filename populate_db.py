@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 def populate_db():
     """
     Fetches data from the public API https://data.sfgov.org/resource/rqzj-sfat and stores it
-    in the PostgreSQL database defined for a running flask application.
+    in the PostgreSQL database specified in the environment variable DATABASE_URL.
     """
     # fetch data from https://data.sfgov.org/resource/rqzj-sfat API
     client = Socrata("data.sfgov.org", None)
