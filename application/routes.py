@@ -1,11 +1,15 @@
 from flask import request, jsonify, abort, make_response, current_app as app
 from .models import FoodTruck, db
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import or_
 
-# application root
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    """
+    Application root endpoint returns metadata about resource collection
+
+    Returns:
+        JSON string with resource meta data
+    """
     # create dict with metadata and return as JSON
     entry_count = FoodTruck.query.count()
     lat_min = db.session.query(db.func.min(FoodTruck.latitude)).scalar()
@@ -21,9 +25,14 @@ def index():
                         'max_longitude':long_max}}
     return jsonify(collection_meta)
 
-# get all food trucks
 @app.route("/foodtrucks", methods=['GET'])
 def get_all_food_trucks():
+    """
+    GET /foodtrucks endpoint returns all resources in collection /foodtrucks
+
+    Returns:
+        JSON representation of all resources in /foodtrucks
+    """
     try:
         # query all trucks in the database
         trucks = FoodTruck.query.all()
@@ -35,6 +44,15 @@ def get_all_food_trucks():
 # get food truck by id
 @app.route("/foodtrucks/<int:truck_id>", methods=['GET'])
 def get_food_truck(truck_id):
+    """
+    GET /foodtrucks/<id> endpoint returns /foodtrucks resource with specific id
+
+    Parameters:
+        truck_id (int): id of truck to query (inferred from request URL)
+
+    Returns:
+        JSON representation of food truck with truck_id or empty dict if it does not exist
+    """
     try:
         # query truck by id
         truck = FoodTruck.query.filter_by(uuid=truck_id).first()
@@ -49,9 +67,19 @@ def get_food_truck(truck_id):
         app.logger.error('error retriveing entry id %d: %s', truck_id, e)
         abort(500)
 
-# update truck by id or create if it does not exist
 @app.route("/foodtrucks/<int:truck_id>", methods=['PUT'])
 def update_food_truck(truck_id):
+    """
+    PUT /foodtrucks/<id> endpoint updates or creates /foodtrucks resource with specific id
+
+    The request must include JSON data specifying the field values of the updated resource.
+
+    Parameters:
+        truck_id (int): id of truck to query (inferred from request URL)
+
+    Returns:
+        JSON representation of updated or created resource
+    """
     # validate JSON request
     if not request.json:
         abort(400)
@@ -105,9 +133,17 @@ def update_food_truck(truck_id):
         app.logger.error('error updating entry id %d: %s', truck_id, e)
         abort(500)
 
-# delete truck by id
 @app.route("/foodtrucks/<int:truck_id>", methods=['DELETE'])
 def delete_food_truck(truck_id):
+    """
+    DELETE /foodtrucks/<id> endpoint deletes /foodtrucks resource with specific id
+
+    Parameters:
+        truck_id (int): id of truck to query (inferred from request URL)
+
+    Returns:
+        JSON response with success message
+    """
     # delete truck with id if it exists
     try:
         truck = FoodTruck.query.filter_by(uuid=truck_id).delete()
@@ -119,37 +155,63 @@ def delete_food_truck(truck_id):
         app.logger.error('error deleting entry id %d: %s', truck_id, e)
         abort(500)
 
-# get trucks by name
 @app.route("/foodtrucks/name/<string:needle>", methods=['GET'])
 def get_food_trucks_by_name(needle):
-    # format search string
-    needle = '%{}%'.format(needle)
+    """
+    GET /foodtrucks/name/<needle> endpoint returns resources in /foodtrucks 
+    filtered by content of name field
 
+    Parameters:
+        needle (str): substring that name field must contain (inferred from request URL)
+
+    Returns:
+        JSON representation of all resources in /foodtrucks filtered by those where the
+        name field contains substring needle 
+    """
     # query by trucks where needle is a case-insensitive substring of name
     try:
-        trucks = FoodTruck.query.filter(FoodTruck.name.ilike(needle))
+        trucks = FoodTruck.query.filter(FoodTruck.name.ilike('%{}%'.format(needle)))
         return jsonify([e.serialize() for e in trucks])
     except SQLAlchemyError as e:
         app.logger.error('error searching for needle %s: %s', needle, e)
         abort(500)
 
-# get trucks by menu items
 @app.route("/foodtrucks/items/<string:needle>", methods=['GET'])
 def get_food_trucks_by_items(needle):
-    # format search string
-    needle = '%{}%'.format(needle)
+    """
+    GET /foodtrucks/items/<needle> endpoint returns resources in /foodtrucks 
+    filtered by content of food_items field
 
+    Parameters:
+        needle (str): substring that food_items field must contain (inferred from request URL)
+
+    Returns:
+        JSON representation of all resources in /foodtrucks filtered by those where the
+        food_items field contains substring needle 
+    """
     # query by trucks where needle is a case-insensitive substring of food_items
     try:
-        trucks = FoodTruck.query.filter(FoodTruck.food_items.ilike(needle))
+        trucks = FoodTruck.query.filter(FoodTruck.food_items.ilike('%{}%'.format(needle)))
         return jsonify([e.serialize() for e in trucks])
     except SQLAlchemyError as e:
         app.logger.error('error searching for needle %s: %s', needle, e)
         abort(500)
 
-# get trucks within radius from location
 @app.route("/foodtrucks/location", methods=['GET'])
 def get_nearby_food_trucks():
+    """
+    GET /foodtrucks/location/<params> endpoint returns resource in /foodtrucks within
+    a specified distance of a specified location. 
+    
+    The request must include latitude and longitude parameters specifying the location 
+    in decimal coordinates. Optionally, the request may also include the search radius
+    im meters, a substring to filter results by the name field and a substring to filter 
+    results by the food_items field.
+
+    Returns:
+        JSON representation of all resources in /foodtrucks with radius distance of location,
+        filtered by those where the name and/or food_items field contain needle substrings
+    """
     # geo-position arguments are required - 400 returned if both are not present
     longitude = request.args['longitude']
     latitude = request.args['latitude']
@@ -188,6 +250,14 @@ def get_nearby_food_trucks():
 # add truck to resources
 @app.route("/foodtrucks", methods=['POST'])
 def add_food_truck():
+    """
+    POST /foodtrucks/<id> endpoint creates a /foodtrucks resource
+
+    The request must include JSON data specifying the field values of the resource.
+
+    Returns:
+        JSON representation of the created resource
+    """
     # validate JSON request
     if not request.json:
         abort(400)
@@ -231,14 +301,23 @@ def add_food_truck():
 # bad request
 @app.errorhandler(400)
 def bad_request(error):
+    """
+    Flask error handler for manually invoking 'bad request' response codes
+    """
     return make_response(jsonify({'error': 'Bad request'}), 400)
 
 # route not found
 @app.errorhandler(404)
 def not_found(error):
+    """
+    Flask error handler for manually invoking 'resource not found' response codes
+    """
     return make_response(jsonify({'error': 'Resource not found'}), 404)
 
 # internal server error
 @app.errorhandler(500)
 def internal_error(error):
+    """
+    Flask error handler for manually invoking 'internal server error' response codes
+    """
     return make_response(jsonify({'error': 'Internal server error'}), 500)

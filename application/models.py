@@ -6,6 +6,9 @@ class FoodTruck(db.Model):
 
     Attributes
     ----------
+    uuid (int)
+        Unique identifer for truck (primary key for DB)
+
     name (string)
         Name of the truck
     
