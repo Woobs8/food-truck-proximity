@@ -21,11 +21,11 @@ The application is hosted on [Heroku](https://food-truck-proximity.herokuapp.com
 6. Omissions, Considerations and Future Work
 
 ## Problem Description
-The service should allow a client to request food trucks that are nearby a specific location on a map. I imagine a usage scenario where clients in the form of mobile apps will utilize the service to query nearby food trucks. How the location is determined, how the distance is measured and what is considered 'nearby' is not specified, and is therefore considered a design choice. In terms of distance, it can be calculated as the spherical distance between coordinates, which does not account for street layout and may therefore not represent the actual distance one would have to travel to reach the location. Alternatively, the distance can take street layout into account and measure distance as the travel distance along the shortest or fastest route. The former method is fairly straightforward, and can be computed using just the coordinates. The latter method requires up-to-date maps, and involves more complex computations that will likely involve external APIs. With the scope of the project and the envisioned usage scenario in mind, I decided that the spherical distance was the best choice, as it provides a good approximation of actual traval distance with minimal complexity, and does not rely on external APIs.
+The service should allow a client to request food trucks that are nearby a specific location on a map. I imagine a usage scenario where clients in the form of mobile apps will utilize the service to query nearby food trucks. How the location is determined, how the distance is measured and what is considered 'nearby' is not specified, and is therefore considered a design choice. The distance can be calculated as the spherical distance between coordinates, which would not account for street layout and may therefore not represent the actual distance one would have to travel to reach the location. Alternatively, the distance can take street layout into account and measure distance as the travel distance along the shortest or fastest route. The former method is fairly straightforward, and can be computed using just the coordinates. The latter method requires up-to-date maps, and involves more complex computations that will likely involve external APIs. With the scope of the project and the envisioned usage scenario in mind, I decided that the spherical distance was the best choice, as it provides a good approximation of actual traval distance with minimal complexity, and does not rely on external APIs.
 
-As this is the backend track, the service does not include a frontend, but exposes an API that clients, in the form of apps or services, can interact with. Since there is no frontend, no geolocalization of the client is done, and the client is expected to know its own location. The data used for the service is based on mobile food facility permits in [San Francisco](https://data.sfgov.org/Economy-and-Community/Mobile-Food-Facility-Permit/rqzj-sfat). 
+As this is the backend track, the service does not include a frontend, but exposes an API that clients, in the form of apps or services, can interact with. Since there is no frontend, no geolocalization of the client is done, and the client is expected to know its own location. The definition of 'nearby' is left up to the clients, as the API should provide clients with an option for specifying the radius within which food trucks should be located.
 
-The API should expose the following functionality to the client:
+Given the above problem description, the API should expose the following functionality to the client:
 * Lookup all food trucks
 * Lookup a specific food truck
 * Add a food truck
@@ -45,6 +45,8 @@ The data model is based on the above requirements and the structure of the avail
 4. longitude: decimal longitude coordinate of the truck
 5. days_hours: string representation of the business hours of the truck
 6. food_items: string representation of the truck's menu items
+
+The data used for the service is based on mobile food facility permits in [San Francisco](https://data.sfgov.org/Economy-and-Community/Mobile-Food-Facility-Permit/rqzj-sfat).
 
 All of these fields apart from the primary key exist in the original data in the same format. The remaining fields in the original data were not deemed relevant for the functionality of this service and were therefore omitted. An example of the resulting data model is shown in the table below:
 
