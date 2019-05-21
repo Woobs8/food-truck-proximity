@@ -1,4 +1,9 @@
 from . import db
+from .haversine import haversine
+from sqlalchemy.ext.hybrid import hybrid_method
+from sqlalchemy import func
+from sqlalchemy.orm import aliased
+
 
 class FoodTruck(db.Model):
     """
@@ -28,10 +33,15 @@ class FoodTruck(db.Model):
     -------
     serialize
         Returns a dictionary representation of a class instance
+
+    great_circle_distance(lat, lon)
+        Calculates the great-circle distance between an instance of FoodTruck
+        and a specified coordinate.
     
-    get_food_trucks_within_radius(lon, lat, radius)
+    get_food_trucks_within_radius(lon, lat, radius, name, item)
         Queries database and returns the trucks in the database within radius distance
-        of position specified by lon(gitude) and lat(itude)
+        of position specified by lon(gitude) and lat(itude). Optionally filters results
+        by the trucks with names and/or menu items that contains the specified strings
     """
 
     __tablename__ = 'sf_food_trucks'
@@ -42,7 +52,7 @@ class FoodTruck(db.Model):
     days_hours = db.Column(db.String())
     food_items = db.Column(db.String())
 
-    def __init__(self, name: str, longitude: float, latitude: float, days_hours: str, food_items: str):
+    def __init__(self, name, longitude, latitude, days_hours, food_items):
         self.name = name
         self.longitude = longitude
         self.latitude = latitude
@@ -65,28 +75,81 @@ class FoodTruck(db.Model):
             'food_items':self.food_items
         }
 
+    @hybrid_method
+    def great_circle_distance(self, lat, lon):
+        """
+        Calculates the distance from a FoodTruck instance to the location specified
+        by the coordinates lat(itude) and lon(gitude). Hybrid_method is a sqlalchemy
+        decorator that allows for the definition of both instance-level and
+        class-level behavior. This is the instance level method, and it is processed
+        on an application level in Python.
+
+        Parameters:
+            lat (float): latitude coordinate in decimal format
+            lon (float): longitude coordinate in decimal format
+
+        Returns:
+            float: distance between instance and specified coordinate
+        """
+        return haversine(lat, lon, self.latitude, self.longitude)
+
+    @great_circle_distance.expression
+    def great_circle_distance(cls, lat, lon):
+        """
+        Calculates the distance between an element in the FoodTruck model 
+        and the location specified by the coordinates lat(itude) and lon(gitude).
+        The Hybrid_method.expression defines class-level behavior for method, and
+        is processed on a database level in SQL.
+
+        Parameters:
+            lat (float): latitude coordinate in decimal format
+            lon (float): longitude coordinate in decimal format
+
+        Returns:
+            float: distance between model element and specified coordinate
+        """
+        return haversine(lat, lon, cls.latitude, cls.longitude, math=func)
+
     @classmethod
-    def get_food_trucks_within_radius(cls, lon, lat, radius):
+    def get_food_trucks_within_radius(cls, lat, lon, radius, name=None, item=None):
         """
-        Queries database and returns the trucks in the database within radius distance
-        of position specified by lon(gitude) and lat(itude)
+        Queries the database and returns the trucks in the database within a distance
+        of radius from the position specified by lon(gitude) and lat(itude)
+        
+        Parameters:
+            lat (float): latitude coordinate in decimal format
+            lon (float): longitude coordinate in decimal format
+            radius (int): search radius in meters
+            name (str): substring that names must contain
+            item (str): substring that food_items must contain
+
+        Returns:
+            list: list of FoodTruck objects
         """
-        query = db.text("""
-            SELECT *
-            FROM (
-                SELECT 
-                    *,
-                    2 * 6371 * asin(sqrt((sin(radians((:lat - latitude) / 2))) ^ 2 + 
-                    cos(radians(latitude)) * cos(radians(:lat)) * (sin(radians((:lon - longitude) / 2))) ^ 2)) 
-                    as distanceInKM                            
-                FROM "sf_food_trucks") sfft
-            WHERE sfft.distanceInKM*1000 <= :dist
-            ORDER BY sfft.distanceInKM
-            """)
+        # ensure correct data types
+        lat = float(lat)
+        lon = float(lon)
+        radius = float(radius)
 
-        food_trucks = cls.query.from_statement(query).params(
-            lat=float(lat),
-            lon=float(lon),
-            dist=int(radius)).all()
+        # query great-circle distance between coordinate and elements in database
+        stmt = db.session.query(
+                        cls,
+                        cls.great_circle_distance(lat, lon).
+                        label('dist')).subquery()
+        food_truck_alias = aliased(cls, stmt)
 
-        return food_trucks
+        # filter by search radius
+        food_trucks = db.session.query(food_truck_alias).filter(stmt.c.dist <= radius)
+
+        # filter by name if specified
+        if name:
+            food_trucks = food_trucks.filter(stmt.c.name.ilike('%{}%'.format(name)))
+        
+        # filter by item if specified
+        if item:
+            food_trucks = food_trucks.filter(stmt.c.food_items.ilike('%{}%'.format(item)))
+        
+        # sort by distance ascending
+        food_trucks = food_trucks.order_by(stmt.c.dist)
+
+        return food_trucks.all()

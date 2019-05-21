@@ -8,7 +8,7 @@ def index():
     Application root endpoint returns metadata about resource collection
 
     Returns:
-        JSON string with resource meta data
+        str: JSON string with resource meta data
     """
     # create dict with metadata and return as JSON
     entry_count = FoodTruck.query.count()
@@ -36,7 +36,7 @@ def get_all_food_trucks():
     GET /foodtrucks endpoint returns all resources in collection /foodtrucks
 
     Returns:
-        JSON representation of all resources in /foodtrucks
+        str: JSON representation of all resources in /foodtrucks
     """
     try:
         # query all trucks in the database
@@ -56,7 +56,7 @@ def get_food_truck(truck_id):
         truck_id (int): id of truck to query (inferred from request URL)
 
     Returns:
-        JSON representation of food truck with truck_id or empty dict if it does not exist
+        str: JSON representation of food truck with truck_id or empty dict if it does not exist
     """
     try:
         # query truck by id
@@ -83,7 +83,7 @@ def update_food_truck(truck_id):
         truck_id (int): id of truck to query (inferred from request URL)
 
     Returns:
-        JSON representation of updated or created resource
+        str: JSON representation of updated or created resource
     """
     # validate JSON request
     if not request.json:
@@ -147,7 +147,7 @@ def delete_food_truck(truck_id):
         truck_id (int): id of truck to query (inferred from request URL)
 
     Returns:
-        JSON response with success message
+        str: JSON response with success message
     """
     # delete truck with id if it exists
     try:
@@ -170,8 +170,8 @@ def get_food_trucks_by_name(needle):
         needle (str): substring that name field must contain (inferred from request URL)
 
     Returns:
-        JSON representation of all resources in /foodtrucks filtered by those where the
-        name field contains substring needle 
+        str: JSON representation of all resources in /foodtrucks filtered by those where the
+            name field contains substring needle 
     """
     # query by trucks where needle is a case-insensitive substring of name
     try:
@@ -191,8 +191,8 @@ def get_food_trucks_by_items(needle):
         needle (str): substring that food_items field must contain (inferred from request URL)
 
     Returns:
-        JSON representation of all resources in /foodtrucks filtered by those where the
-        food_items field contains substring needle 
+        str: JSON representation of all resources in /foodtrucks filtered by those where the
+            food_items field contains substring needle 
     """
     # query by trucks where needle is a case-insensitive substring of food_items
     try:
@@ -214,8 +214,8 @@ def get_nearby_food_trucks():
     results by the food_items field.
 
     Returns:
-        JSON representation of all resources in /foodtrucks with radius distance of location,
-        filtered by those where the name and/or food_items field contain needle substrings
+        str: JSON representation of all resources in /foodtrucks with radius distance of location,
+            filtered by those where the name and/or food_items field contain needle substrings
     """
     # geo-position arguments are required - 400 returned if both are not present
     longitude = request.args['longitude']
@@ -232,17 +232,7 @@ def get_nearby_food_trucks():
 
     try:
         # query trucks within radius of position
-        trucks = FoodTruck.get_food_trucks_within_radius(longitude, latitude, radius)
-
-        # filter results by name
-        if name:
-            name = name.lower()
-            trucks = [e for e in trucks if name in e.name.lower()]
-
-        # filter results by menu items
-        if item:
-            item = item.lower()
-            trucks = [e for e in trucks if item in e.food_items.lower()]
+        trucks = FoodTruck.get_food_trucks_within_radius(latitude, longitude, radius, name, item)
 
         return jsonify({'foodtrucks': [e.serialize() for e in trucks]})
     except ValueError:
@@ -261,7 +251,7 @@ def add_food_truck():
     The request must include JSON data specifying the field values of the resource.
 
     Returns:
-        JSON representation of the created resource
+        str: JSON representation of the created resource
     """
     # validate JSON request
     if not request.json:
