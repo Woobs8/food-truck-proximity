@@ -1,2 +1,163 @@
 # food-truck-proximity
-An application for locating food trucks in San Francisco. Developed as a part of the Uber coding challenge.
+An application for locating food trucks in San Francisco. The application is developed as the backend track of the [Uber coding challenge](https://github.com/uber-archive/coding-challenge-tools/blob/master/coding_challenge.md).
+
+The repo is authored by Thomas Hallager Pedersen. For more info refer to [Linkedin](https://www.linkedin.com/in/thomas-hallager-pedersen-69642bb7/).
+
+## Table of Contents
+1. Problem Description
+2. Data Model
+3. Application Design
+4. Testing
+5. Deployment
+6. Omissions, Considerations and Future Work
+
+## Problem Description
+The service should allow a client to request food trucks that are nearby a specific location on a map. How the location is determined and what is considered 'nearby' is not specified, and is therefore considered a design choice. I imagine a usage scenario where clients in the form of mobile apps will utilize the service to query nearby food trucks.
+
+As this is the backend track, the service does not include a frontend, but exposes an API that clients, in the form of apps or services, can interact with. Since there is no frontend, no geolocalization of the client is done, and the client is expected to know its own location. The data used for the service is based on mobile food facility permits in [San Francisco](https://data.sfgov.org/Economy-and-Community/Mobile-Food-Facility-Permit/rqzj-sfat). 
+
+The API should expose the following functionality to the client:
+* Lookup all food trucks
+* Lookup a specific food truck
+* Add a food truck
+* Update a specific food truck
+* Delete a specific food truck
+* Lookup food trucks by name
+* Lookup food trucks by their menu items
+* Lookup food trucks by their proximity to a specific location
+  * The location and search radius should be parameters for the lookup
+  * The client should be able to filter the search by food truck name and/or menu items
+
+## Data Model
+The data model is based on the above requirements and the structure of the available data. The model contains the following fields:
+1. uuid: unique identifier (primary key)
+2. name: name of the truck
+3. latitude: decimal latiude coordinate of the truck
+4. longitude: decimal longitude coordinate of the truck
+5. days_hours: string representation of the business hours of the truck
+6. food_items: string representation of the truck's menu items
+
+All of these fields apart from the primary key exist in the original data in the same format. The remaining fields in the original data were not deemed relevant for the functionality of this service and were therefore omitted. An example of the resulting data model is shown in the table below:
+
+| uuid   | name             | latitude | longitude | days_hours       | food_items              |
+| :------| :----------------| :--------| :---------| :----------------| :-----------------------|
+| 1      | Joe's Food Truck | 37.7201  | -122.3886 | Mon-Fri:8AM-2PM  | sandwiches, soft drinks |
+| 2      | Bob's Food Truck | 37.7220  | -122.3830 | Tue-Fri:10AM-5PM | burgers, soft drinks    |
+
+## Application Design
+The application is written in Python because there are great and well documented frameworks available in Python, and because it is the language I am most comfortable writing in, which is also an important consideration, given the time constraints of the project.
+
+The overall architecture of the service is shown below:
+
+<p style="text-align:center;">
+    <img src="docs/img/service_architecture.png" width="150" alt="Tech Stack"/>
+</p>
+
+The most important technologies used in the service are shown in the tech stack below:
+
+<p style="text-align:center;">
+    <img src="docs/img/tech_stack.png" width="200" alt="Tech Stack"/>
+</p>
+
+### Database
+The data model is designed for a relational database. I went with PostgreSQL because it is an open-source RDBMS that works well in production environments. Additionally, I had some previous experience working with PostgreSQL in the Heroku environment. Alternative RDBMS options such as MySQL would also be a valid option. Disk-based RDBMS options such as SQLite would simplify the local development and testing, but it is poorly supported in production environments.
+
+### ORM
+An ORM is a useful abstraction layer to the database access that makes code portable between vendors, since vendor-specifc SQL is handled by the ORM. In my experience, SQLAlchemy is the most intuitive and feature-rich python ORM and also the default ORM of the Flask framework, which is used as the framework for the web application.
+
+### Web Framework
+Flask is a lightweight web framework for Python. I did not have any previous experience working with Flask, but initial research indicated that it was lightweight, intuitive and simple to configure. I figured this was ideal for a relatively simple application such as this, where heavier and more feature-rich frameworks such as Django are not necessary.
+
+### Application
+#### Architecture
+The application is designed as a web application using the traditional Model-View-Controller architecture. The application consists of a `models.py` module, which contains the database model used by the ORM to interact with the database, a `routes.py` module which is the controller that interarcts with the model to create and return views. Since there is no frontend, the views are simply the returned JSON representation of requested resources.
+
+The Flask application factory itself is defined in the `__init__.py` module. The flask extension libraries `flask-migrate` and `flask-script` are used to create a `manage.py` script for managing and performing database migrations. The ability to migrate the database is not required for the current application, but is a nice feature if one were to continue development of the application, and add features that would require database schema changes in the future.
+
+#### Logging
+The application currently logs all internal errors and database changes to files in two hour increments, storing up to 24 hours of logs. The increment and duration of the log is dependent on the load and frequency of maintenance of the service, and the chosen values are not necessarily optimal. GET requests and client errors such as bad requests are not logged, since they would clutter the log. The current approach requires admins to periodically access the server and read the log files to discover errors. A better solution would be to inform admins in case of errors through email or similar, but this was outside the scope of the project.
+
+#### Finding Food Trucks in the Proximity of a Location
+The client will send a GET request to the `foodtrucks/location` resource and include the mandatory parameters _latitude_ and _longitude_ specifying the location, and optionally a _radius_ parameter specifying the search radius.
+
+The application then queries the database for the elements whose location, as given by their coordinates, is within _radius_ distance of the client location. The query uses the [haversine formula](https://en.wikipedia.org/wiki/Haversine_formula) to calculate the _great-circle distance_ between every element and the client location and returns those within the _radius_.
+
+### API
+I decided go with a RESTful approach to the API because it provides a  stateless interaction between the service and clients, which is an nice feature when the service is designed to be used by other services as it simplifies the interfaces. I also thought that a RESTful approach would provide an intuitive interface to the underlying resources.
+
+Given the initial API requirements, the API has the following endpoints:
+
+| Method    | Endpoint                     | Description                                          | Status Code |
+| :---------| :----------------------------| :----------------------------------------------------| :-----------|
+| GET       | `/`                          | Resource collection metadata                         | 200         |
+| GET       | `/foodtrucks`                | List all food trucks                                 | 200         |
+| POST      | `/foodtrucks`                | Add new food truck to resources                      | 201         |
+| GET       | `/foodtrucks/{truck_id}`     | Get food truck details                               | 200         |
+| PUT       | `/foodtrucks/{truck_id}`     | Update or create food truck                          | 200         |
+| DELETE    | `/foodtrucks/{truck_id}`     | Remove food truck                                    | 200         |
+| GET       | `/foodtrucks/name/{needle}`  | Get list of food trucks filtered by name             | 200         |
+| GET       | `/foodtrucks/items/{needle}` | Get list of food trucks filtered by menu items       | 200         |
+| GET       | `/foodtrucks/location`       | Get list of food trucks in the proximity of location | 200         |
+
+The detailed API documentation is included in a [separate document](docs/api_documentation.pdf). The format is inspired by the documentation of the Uber [Riders API](https://developer.uber.com/docs/riders/references/api).
+
+## Testing
+The test setup uses the `pytest` package, as it is the one recommended by the Flask [documentation](http://flask.pocoo.org/docs/1.0/testing/).
+
+The test setup requires:
+* Test PostgreSQL database server
+* Local python 3.6.8 environment
+* Python packages listed in `requirements.txt` must be installed
+
+The tests are separated into two modules: `unit` and `functional`. The `unit` module contains unit tests for the application model. The `functional` module contains the integration tests for the Flask application and tests all the application endpoints.
+
+## Deployment
+The service is deployed on Heroku at https://food-truck-proximity.herokuapp.com/ on a free web dyno with a hobby-dev PostgreSQL database service. The free dyno will sleep after 30 min of inactivity. A sleeping dyno will be woken by new requests, but require a slight delay while reactivating.
+
+The database has been populated with the original data from the [API](https://data.sfgov.org/Economy-and-Community/Mobile-Food-Facility-Permit/rqzj-sfat). Only the entries with non-Null values in the included columns were used, limiting the dataset to 511 entries.
+
+## Omissions, Considerations and Future Work
+### Authentication
+The most glaring omission is the lack of authentication. I did develop a design for the authentication procedure, but I was unfortunately not able to include it due to time constraints. Whether the GET request should be protected by authentication is dependent on the system that the service is a part of, but the POST, PUT and DELETE API endpoints should definitely be protected by authentication to protect the data from misuse and malicious attacks.
+
+My intention was to use a JSON web tokens (JWT) to authenticate requests. The system works by having clients register themselves to the service using a _username_ and _password_. The user is then created and stored in a _Users_ database. After registration, a client will be able to request a JWT by logging in, which prompts the service to return a JWT on successful login. The client can then use the JWT to access the API. The JWT is only valid for a set duration, after which a new login is required. Since each issued JWT is associated with a user, the service can associate a request with a user when a JWT is included.
+
+By adding a _user_ columns to the database of food trucks, and filling that column with the user id retrieved from the JWT in the POST or PUT request that created the entry, each entry would be associated with the user that created it. The service would then be able to restrict POST/PUT/DELETE access for a given resource to a specific user.
+
+The architecture of the service with authentication would be as shown below:
+
+<p style="text-align:center;">
+    <img src="docs/img/service_architecture_with_auth.png" width="350" alt="Tech Stack"/>
+</p>
+
+### Query by Business Hours
+I would have liked to add a feature for querying by food trucks that are open at a specified time of day, but due to the unspecified format of the _dayshours_ field representation in the original data, it is not a trivial query. Alternatively, the data model should be changed to allow for a simpler query. I consider this a nice-to-have feature, so due to these complications, I decided to give it low priority and unfortunately did not get around to it because of time constraints.
+
+### Scalability
+I have not addressed scalability explicitly in the design of the application, but I did consider some potential design improvements that would improve scalability. I did not include these, since I was not certain I had considered all edge-cases and wanted to adhere to the spirit of the challenge that focuses on production readiness.
+
+#### Issue: How to Handle Expansion of Geographical Area
+The original dataset is limited to San Francisco, but the service does not limit the food truck locations to just this area as clients can POST food trucks located anywhere in the world. If one were to consider expanding the service for worldwide adoption, using a single database table to store all trucks in the world is not a good idea, and a different approach is required.
+
+##### Solution: Differerent Database Tables for Different Geographical Areas
+A solution to this problem would be to split the overall geographical area of the countries in which the service is operating into smaller areas, and assign each of these to a table in the database. A location query would then first query the relevant table, and then the entries in that table. In the case of a location on the border of tables, the query would have to query the entries in all tables around that border.
+
+#### Issue: Inefficient Location Queries
+One of the primary inefficiencies in the current design of the service is the fact that every single location query calculates the distance to every entry in the database and returns those within a search radius. This is fine for a small dataset, but if the dataset were to grow significantly, the query may slow down. The location request can be expected to be the most commonly occurring, and improving its efficiency should therefore improve the scalability of the service.
+
+##### Solution: Caching Location Queries
+Adding a cache for requests would allow the service to reuse previously processed requests at a future time and thereby save computational resources. This works fine for the simple requests where there is no or little variation in the request parameters, but the location includes coordinates, which has a large set of possible values, and is therefore much more variable. The effectiveness of the caching is therefore limited. However, in the spirit of efficiency we might discretize the client coordinates further and round to the decimal place representing an arbitrary real world resolution. The result is that the service would consider all clients to be at their nearest _round-off point_, and serve all clients at each of these points the same results. This would improve the effectiveness of caching as the set of possible parameters is reduced. The obvious drawback, is that clients get less accurate results, but this may not be a problem as long as the rounding resolution is not too coarse. The resolution should be chosen according to the expected number of users and the precision desired for the user queries.
+
+The cache of a given request would have to invalidated whenever its return result is affected by the addition, update or deletion of a food truck. This introduces an additional overhead on these operations, but with the assumption that GET requests outnumber POST, PUT and DELETE requests, the efficiency gains may outweigh the overhead and provide a net gain.
+
+
+### Micro-Service Architecture
+Initially, my approach was to imagine the service as a part of a larger system based on a micro-service architecture. The idea was motivated by wanting the system to be both scalable and extendable. In this system, the `food-truck-proximity` service would only be responsible for exposing an API for querying food trucks in proximity to a location while another service `food-truck-register` would expose an API for getting, adding, updating and deleting food trucks. The `food-truck-register` service would then notiy the `food-truck-proximity` service whenever changes occur, so it can update its database accordingly. New features could then be added to the system by adding additional service.
+
+An API gateway would be used to mimic a monolithic application from the perspective of the client. The API gateway would also enforce the client authentication.
+
+I quickly realized that I would not have the time to develop each of the services sufficiently, and scrapped the idea for a monolithic approach, but I have included my initial design for discussion purposes.
+
+<p style="text-align:center;">
+    <img src="docs/img/microservice_architecture.png" width="550" alt="Tech Stack"/>
+</p>
