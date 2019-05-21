@@ -3,7 +3,8 @@ from application.models import FoodTruck
 from test_data import test_data, test_name, test_item, test_location, test_radius
 import json
 
-@pytest.mark.usefixtures('class_db', 'populate_db')
+
+@pytest.mark.usefixtures('create_db', 'populate_db')
 class TestPut():
     """
     Test cases for validating the PUT endpoint of the application.
@@ -54,6 +55,7 @@ class TestPut():
         assert truck.days_hours == put_data['days_hours']
         assert truck.food_items == put_data['food_items']
 
+
     def test_create_truck(self, client):
         """
         Test PUT request to create new FoodTruck with specific id.
@@ -93,6 +95,7 @@ class TestPut():
         assert truck.longitude == put_data['longitude']
         assert truck.days_hours == put_data['days_hours']
         assert truck.food_items == put_data['food_items']
+
 
     def test_update_truck_bad_request(self, client):
         """

@@ -3,6 +3,7 @@ from application import create_app
 from application.models import FoodTruck, db
 from test_data import test_data
 
+
 @pytest.fixture(scope='session', autouse=True)
 def app():
     """
@@ -11,8 +12,9 @@ def app():
     _app = create_app()
     return _app
 
+
 @pytest.fixture(scope='class')
-def class_db(app):
+def create_db(app):
     """
     A test fixture for creating a database table, with the schema defined in model, 
     once per test class and deleted after exiting the scope of a test class.
@@ -24,6 +26,7 @@ def class_db(app):
         db.session.close()
         db.drop_all()
 
+
 @pytest.fixture()
 def client(app):
     """
@@ -31,8 +34,9 @@ def client(app):
     """
     return app.test_client()
 
+
 @pytest.fixture(scope='class')
-def populate_db(class_db):
+def populate_db(create_db):
     """
     A test fixture for populating the database with test data. 
     Will only run once per test class.
@@ -45,5 +49,5 @@ def populate_db(class_db):
             days_hours = e['days_hours'],
             food_items = e['food_items']
         )
-        class_db.session.add(truck)
-    class_db.session.commit()
+        create_db.session.add(truck)
+    create_db.session.commit()

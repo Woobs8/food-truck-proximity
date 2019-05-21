@@ -2,12 +2,14 @@ import pytest
 from application.models import FoodTruck
 from test_data import test_location, test_radius
 
+
 # test values
 name = 'Food Truck 1'
 latitude = 37.7201
 longitude = -122.3886
 days_hours = 'Mon-Fri:8AM-2PM'
 food_items = 'sandwiches'
+
 
 @pytest.fixture(scope='module')
 def new_food_truck():
@@ -21,7 +23,8 @@ def new_food_truck():
             food_items=food_items)
     return truck
 
-@pytest.mark.usefixtures('class_db', 'populate_db')
+
+@pytest.mark.usefixtures('create_db', 'populate_db')
 class TestFoodTruck():
     """
     Unit test the FoodTruck model class
@@ -40,6 +43,7 @@ class TestFoodTruck():
         assert new_food_truck.days_hours == days_hours
         assert new_food_truck.food_items == food_items
 
+
     def test_food_truck_serialize(self, new_food_truck):
         """
         Test the FoodTruck instance method serialize()
@@ -56,6 +60,7 @@ class TestFoodTruck():
         assert truck['longitude'] == longitude
         assert truck['days_hours'] == days_hours
         assert truck['food_items'] == food_items
+
 
     def test_food_truck_radius_query(self, app):
         """

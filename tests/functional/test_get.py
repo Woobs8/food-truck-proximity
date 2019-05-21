@@ -2,7 +2,8 @@ import pytest
 from application.models import FoodTruck
 from test_data import test_data, test_name, test_item, test_location, test_radius
 
-@pytest.mark.usefixtures('class_db')
+
+@pytest.mark.usefixtures('create_db')
 class TestGetEmptyDB():
     """
     Test cases for validating the GET endpoints of the application with an 
@@ -26,6 +27,7 @@ class TestGetEmptyDB():
         data = ret.get_json()['foodtrucks']
         assert data['entries'] == 0
 
+
     def test_get_all_empty_db(self, client):
         """
         Test the GET request to the foodtrucks root endpoint
@@ -39,6 +41,7 @@ class TestGetEmptyDB():
         data = ret.get_json()['foodtrucks']
         assert len(data) == 0
 
+
     def test_get_truck_by_id_empty_db(self, client):
         """
         Test the GET request to foodtrucks with specific id
@@ -51,6 +54,7 @@ class TestGetEmptyDB():
         assert ret.status_code == 200
         data = ret.get_json()
         assert len(data) == 0
+
 
     def test_get_truck_by_name_empty_db(self, client):
         """
@@ -66,6 +70,7 @@ class TestGetEmptyDB():
         data = ret.get_json()['foodtrucks']
         assert len(data) == 0
 
+
     def test_get_truck_by_item_empty_db(self, client):
         """
         Test the GET request to foodtrucks with foodtrucks searched by item
@@ -79,6 +84,7 @@ class TestGetEmptyDB():
         assert ret.status_code == 200
         data = ret.get_json()['foodtrucks']
         assert len(data) == 0
+
 
     def test_get_truck_by_location_empty_db(self, client):
         """
@@ -97,7 +103,7 @@ class TestGetEmptyDB():
         assert len(data) == 0
 
 
-@pytest.mark.usefixtures('class_db', 'populate_db')
+@pytest.mark.usefixtures('create_db', 'populate_db')
 class TestGet():
     """
     Test cases for validating the GET endpoints of the application with a populated database. 
@@ -120,6 +126,7 @@ class TestGet():
         assert ret.status_code == 200
         assert ret.get_json()['foodtrucks']['entries'] == len(test_data)
 
+
     def test_get_all(self, client):
         """
         Test the GET request to foodtrucks root endpoint
@@ -132,6 +139,7 @@ class TestGet():
         assert ret.status_code == 200
         data = ret.get_json()['foodtrucks']
         assert len(data) == len(test_data)
+
 
     def test_get_truck_by_id(self, client):
         """
@@ -155,6 +163,7 @@ class TestGet():
             assert data['days_hours'] == e['days_hours']
             assert data['food_items'] == e['food_items']
 
+
     def test_get_truck_by_id_not_found(self, client):
         """
         Test the GET request to foodtrucks with nonexisting id
@@ -168,6 +177,7 @@ class TestGet():
         assert ret.status_code == 200
         data = ret.get_json()
         assert len(data) == 0
+
 
     def test_get_truck_by_name_lowercase(self, client):
         """
@@ -190,6 +200,7 @@ class TestGet():
         for e in data:
             assert name in e['name'].lower()
 
+
     def test_get_truck_by_name_uppercase(self, client):
         """
         Test the GET request to foodtrucks searched by uppercase name
@@ -210,6 +221,7 @@ class TestGet():
         # every returned element should contain substring name
         for e in data:
             assert name in e['name'].upper()
+
 
     def test_get_truck_by_item_lowercase(self, client):
         """
@@ -232,6 +244,7 @@ class TestGet():
         for e in data:
             assert item in e['food_items'].lower()
 
+
     def test_get_truck_by_item_uppercase(self, client):
         """
         Test the GET request to foodtrucks searched by uppercase food items
@@ -252,6 +265,7 @@ class TestGet():
         # every returned element should contain substring item
         for e in data:
             assert item in e['food_items'].upper()
+
 
     def test_get_truck_by_location(self, client):
         """
@@ -278,6 +292,7 @@ class TestGet():
             for i, e in enumerate(data):
                 assert test_radius[radius][1][i] == e['uuid']
 
+
     def test_get_truck_by_location_bad_request(self, client):
         """
         Test the GET request to foodtrucks nearby location with missing parameters
@@ -297,6 +312,7 @@ class TestGet():
         # omit longitude
         ret = client.get('/foodtrucks/location?longitude=&latitude={}'.format(lat))
         assert ret.status_code == 400
+
 
     def test_get_truck_by_location_and_name(self, app, client):
         """

@@ -3,7 +3,8 @@ from application.models import FoodTruck
 from test_data import test_data, test_name, test_item, test_location, test_radius
 import json
 
-@pytest.mark.usefixtures('class_db')
+
+@pytest.mark.usefixtures('create_db')
 class TestPost():
     """
     Test cases for validating the POST endpoints of the application.
@@ -51,6 +52,7 @@ class TestPost():
         assert truck.longitude == post_data['longitude']
         assert truck.days_hours == post_data['days_hours']
         assert truck.food_items == post_data['food_items']
+
 
     def test_post_truck_bad_request(self, client):
         """

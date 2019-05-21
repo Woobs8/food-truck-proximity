@@ -1,6 +1,7 @@
 import pytest
 from application.haversine import haversine
 
+
 def test_haversine():
     """
     Test that the haversine function returns the correct distance.
