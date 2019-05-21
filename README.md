@@ -3,6 +3,15 @@ An application for locating food trucks in San Francisco. The application is dev
 
 The repo is authored by Thomas Hallager Pedersen. For more info refer to [Linkedin](https://www.linkedin.com/in/thomas-hallager-pedersen-69642bb7/).
 
+The structure of the repository is as follows:
+- [`application`](https://github.com/Woobs8/food-truck-proximity/tree/master/application): implementation of the web application
+- [`docs`](https://github.com/Woobs8/food-truck-proximity/tree/master/docs): documents and images used for documentation
+- [`migrations`](https://github.com/Woobs8/food-truck-proximity/tree/master/migrations): auto-generated directory used to manage database migrations
+- [`tests`](https://github.com/Woobs8/food-truck-proximity/tree/master/tests): unit and integration tests
+- [`utils`](https://github.com/Woobs8/food-truck-proximity/tree/master/utils): utility scripts used during development for convenience
+
+The application is hosted on [Heroku](https://food-truck-proximity.herokuapp.com/).
+
 ## Table of Contents
 1. Problem Description
 2. Data Model
@@ -41,26 +50,26 @@ All of these fields apart from the primary key exist in the original data in the
 
 | uuid   | name             | latitude | longitude | days_hours       | food_items              |
 | :------| :----------------| :--------| :---------| :----------------| :-----------------------|
-| 1      | Joe's Food Truck | 37.7201  | -122.3886 | Mon-Fri:8AM-2PM  | sandwiches, soft drinks |
-| 2      | Bob's Food Truck | 37.7220  | -122.3830 | Tue-Fri:10AM-5PM | burgers, soft drinks    |
+| 1      | Joe's Food Truck | 37.7201  | -122.3886 | Mon-Fri:8AM-2PM  | sandwiches: soft drinks |
+| 2      | Bob's Food Truck | 37.7220  | -122.3830 | Tue-Fri:10AM-5PM | burgers: soft drinks    |
 
 ## Application Design
-The application is written in Python because there are great and well documented frameworks available in Python, and because it is the language I am most comfortable writing in, which is also an important consideration, given the time constraints of the project.
+The application is written in Python because there are great and well documented frameworks available in Python, and because it is the language I am most comfortable writing in, which is also an important consideration given the time constraints of the project.
 
 The overall architecture of the service is shown below:
 
-<p style="text-align:center;">
+<p align="center">
     <img src="docs/img/service_architecture.png" width="150" alt="Tech Stack"/>
 </p>
 
-The most important technologies used in the service are shown in the tech stack below:
+The most important technologies used in the service are shown below:
 
-<p style="text-align:center;">
+<p align="center">
     <img src="docs/img/tech_stack.png" width="200" alt="Tech Stack"/>
 </p>
 
 ### Database
-The data model is designed for a relational database. I went with PostgreSQL because it is an open-source RDBMS that works well in production environments. Additionally, I had some previous experience working with PostgreSQL in the Heroku environment. Alternative RDBMS options such as MySQL would also be a valid option. Disk-based RDBMS options such as SQLite would simplify the local development and testing, but it is poorly supported in production environments.
+The data model is designed for a relational database. I went with PostgreSQL because it is an open-source RDBMS that works well in production environments. Additionally, I had some previous experience working with PostgreSQL in the Heroku environment. Alternative RDBMS options such as MySQL would also be a valid option. Disk-based RDBMS options such as SQLite would simplify the local development and testing, but it is poorly supported in production environments, and was therefore not considered.
 
 ### ORM
 An ORM is a useful abstraction layer to the database access that makes code portable between vendors, since vendor-specifc SQL is handled by the ORM. In my experience, SQLAlchemy is the most intuitive and feature-rich python ORM and also the default ORM of the Flask framework, which is used as the framework for the web application.
@@ -109,7 +118,7 @@ The test setup requires:
 * Local python 3.6.8 environment
 * Python packages listed in `requirements.txt` must be installed
 
-The tests are separated into two modules: `unit` and `functional`. The `unit` module contains unit tests for the application model. The `functional` module contains the integration tests for the Flask application and tests all the application endpoints.
+The tests are separated into two modules: `unit` and `functional`. The `unit` module contains unit tests for the application model. The `functional` module contains the integration tests for the Flask application and tests all the application endpoints. The test data used to test the application and model is stored in `test_data.py`, which also contains the expected return values for differerent test cases.
 
 ## Deployment
 The service is deployed on Heroku at https://food-truck-proximity.herokuapp.com/ on a free web dyno with a hobby-dev PostgreSQL database service. The free dyno will sleep after 30 min of inactivity. A sleeping dyno will be woken by new requests, but require a slight delay while reactivating.
@@ -118,20 +127,23 @@ The database has been populated with the original data from the [API](https://da
 
 ## Omissions, Considerations and Future Work
 ### Authentication
-The most glaring omission is the lack of authentication. I did develop a design for the authentication procedure, but I was unfortunately not able to include it due to time constraints. Whether the GET request should be protected by authentication is dependent on the system that the service is a part of, but the POST, PUT and DELETE API endpoints should definitely be protected by authentication to protect the data from misuse and malicious attacks.
+The most glaring omission is the lack of authentication. I did develop a design for the authentication procedure, but I was unfortunately not able to include it due to time constraints. Whether the GET request should be protected by authentication is dependent on the system, but the POST, PUT and DELETE API endpoints should definitely be protected by authentication to protect the data from misuse and malicious attacks.
 
-My intention was to use a JSON web tokens (JWT) to authenticate requests. The system works by having clients register themselves to the service using a _username_ and _password_. The user is then created and stored in a _Users_ database. After registration, a client will be able to request a JWT by logging in, which prompts the service to return a JWT on successful login. The client can then use the JWT to access the API. The JWT is only valid for a set duration, after which a new login is required. Since each issued JWT is associated with a user, the service can associate a request with a user when a JWT is included.
+My intention was to use JSON web tokens (JWT) to authenticate requests. The system works by having clients register themselves to the service using a _username_ and _password_. The user is then created and stored in a _Users_ database. After registration, a client will be able to request a JWT by logging in, which prompts the service to return a JWT on successful login. The client can then use the JWT to access the API. The JWT is only valid for a set duration, after which a new login is required. Since each issued JWT is associated with a user, the service can associate a request with a user when a JWT is included.
 
-By adding a _user_ columns to the database of food trucks, and filling that column with the user id retrieved from the JWT in the POST or PUT request that created the entry, each entry would be associated with the user that created it. The service would then be able to restrict POST/PUT/DELETE access for a given resource to a specific user.
+By adding a _user_ columns to the database of food trucks, and filling that column with the user id retrieved from the JWT in the POST or PUT request that created the entry, each entry would be associated with the user that created it. The service would then be able to restrict POST/PUT/DELETE access to a given resource to a specific user.
 
 The architecture of the service with authentication would be as shown below:
 
-<p style="text-align:center;">
+<p align="center">
     <img src="docs/img/service_architecture_with_auth.png" width="350" alt="Tech Stack"/>
 </p>
 
 ### Query by Business Hours
-I would have liked to add a feature for querying by food trucks that are open at a specified time of day, but due to the unspecified format of the _dayshours_ field representation in the original data, it is not a trivial query. Alternatively, the data model should be changed to allow for a simpler query. I consider this a nice-to-have feature, so due to these complications, I decided to give it low priority and unfortunately did not get around to it because of time constraints.
+I would have liked to add a feature for querying by food trucks that are open at a specified time of day, but due to the unspecified format of the _dayshours_ field in the original data, it is not a trivial query. Alternatively, the data model should be changed to allow for a simpler query. I consider this a nice-to-have feature, so due to these complications, I decided to give it low priority and unfortunately did not get around to it because of time constraints.
+
+### Database Optimization
+More time should be dedicated to investigating optimization of the database queries. The database currently indexes the _latitude_ and _longitude_ fields for faster lookup, but I did not have the time to investigate the actual effectiveness of this. Additionally, _haversine_ computations are performed for all elements in the database currently. A more efficient appraoch may be to assume a planar surface and do a simple range query on the _latitude_ and _longitude_. The output of this query can then be further filtered by the actual spherical distance using the _haversine_ function. This would reduce the number of _haversine_ distance computations, and may be more efficient, but this would have to be investigated further.
 
 ### Scalability
 I have not addressed scalability explicitly in the design of the application, but I did consider some potential design improvements that would improve scalability. I did not include these, since I was not certain I had considered all edge-cases and wanted to adhere to the spirit of the challenge that focuses on production readiness.
@@ -145,6 +157,8 @@ A solution to this problem would be to split the overall geographical area of th
 #### Issue: Inefficient Location Queries
 One of the primary inefficiencies in the current design of the service is the fact that every single location query calculates the distance to every entry in the database and returns those within a search radius. This is fine for a small dataset, but if the dataset were to grow significantly, the query may slow down. The location request can be expected to be the most commonly occurring, and improving its efficiency should therefore improve the scalability of the service.
 
+Additionally, in the scenario where a large number of users are located in the same area, many nearly identical requests would be processed, with nearly identical results. In this scenario, the service might be able to conserve resources by reusing the results of previously processed requests.
+
 ##### Solution: Caching Location Queries
 Adding a cache for requests would allow the service to reuse previously processed requests at a future time and thereby save computational resources. This works fine for the simple requests where there is no or little variation in the request parameters, but the location includes coordinates, which has a large set of possible values, and is therefore much more variable. The effectiveness of the caching is therefore limited. However, in the spirit of efficiency we might discretize the client coordinates further and round to the decimal place representing an arbitrary real world resolution. The result is that the service would consider all clients to be at their nearest _round-off point_, and serve all clients at each of these points the same results. This would improve the effectiveness of caching as the set of possible parameters is reduced. The obvious drawback, is that clients get less accurate results, but this may not be a problem as long as the rounding resolution is not too coarse. The resolution should be chosen according to the expected number of users and the precision desired for the user queries.
 
@@ -152,12 +166,12 @@ The cache of a given request would have to invalidated whenever its return resul
 
 
 ### Micro-Service Architecture
-Initially, my approach was to imagine the service as a part of a larger system based on a micro-service architecture. The idea was motivated by wanting the system to be both scalable and extendable. In this system, the `food-truck-proximity` service would only be responsible for exposing an API for querying food trucks in proximity to a location while another service `food-truck-register` would expose an API for getting, adding, updating and deleting food trucks. The `food-truck-register` service would then notiy the `food-truck-proximity` service whenever changes occur, so it can update its database accordingly. New features could then be added to the system by adding additional service.
+Initially, my approach was to imagine the service as a part of a larger system based on a micro-service architecture. The idea was motivated by wanting the system to be both scalable and extendable. In this system, the `food-truck-proximity` service would only be responsible for exposing an API for querying food trucks in proximity to a location while another service `food-truck-register` would expose an API for getting, adding, updating and deleting food trucks. The `food-truck-register` service would then notiy the `food-truck-proximity` service whenever changes occur, so it can update its database accordingly. New features can then be added to the system by adding additional services.
 
 An API gateway would be used to mimic a monolithic application from the perspective of the client. The API gateway would also enforce the client authentication.
 
 I quickly realized that I would not have the time to develop each of the services sufficiently, and scrapped the idea for a monolithic approach, but I have included my initial design for discussion purposes.
 
-<p style="text-align:center;">
+<p align="center">
     <img src="docs/img/microservice_architecture.png" width="550" alt="Tech Stack"/>
 </p>
