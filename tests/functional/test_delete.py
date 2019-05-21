@@ -1,7 +1,6 @@
 import pytest
 from application.models import FoodTruck
 from test_data import test_data, test_name, test_item, test_location, test_radius
-from haversine import haversine
 import json
 
 @pytest.mark.usefixtures('class_db', 'populate_db')
@@ -14,7 +13,7 @@ class TestDelete():
     2. Create database table
     3. Populate database with predefined elements
     """
-    
+
     def test_delete_existing_truck(self, client):
         """
         Test DELETE request to delete existing FoodTruck.

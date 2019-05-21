@@ -1,7 +1,6 @@
 import pytest
 from application.models import FoodTruck
 from test_data import test_location, test_radius
-from haversine import haversine
 
 # test values
 name = 'Food Truck 1'
@@ -23,7 +22,7 @@ def new_food_truck():
     return truck
 
 @pytest.mark.usefixtures('class_db', 'populate_db')
-class TestModel():
+class TestFoodTruck():
     """
     Unit test the FoodTruck model class
     """
@@ -71,10 +70,9 @@ class TestModel():
         radius = app.config['DEFAULT_SEARCH_RADIUS']
         latitude = test_location[0]
         longitude = test_location[1]
-        ret = FoodTruck.get_food_trucks_within_radius(longitude, latitude, radius)
-        assert len(ret) == test_radius[radius]
+        ret = FoodTruck.get_food_trucks_within_radius(latitude, longitude, radius)
+        assert len(ret) == test_radius[radius][0]
 
-        # every returned element should be within radius distance
-        for e in ret:
-            dist = haversine(latitude, longitude, e.latitude, e.longitude)
-            assert dist <= radius
+        # verify that the correct trucks are returned, in the correct order
+        for i, e in enumerate(ret):
+            assert test_radius[radius][1][i] == e.uuid

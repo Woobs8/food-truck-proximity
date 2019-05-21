@@ -1,7 +1,6 @@
 import pytest
 from application.models import FoodTruck
 from test_data import test_data, test_name, test_item, test_location, test_radius
-from haversine import haversine
 
 @pytest.mark.usefixtures('class_db')
 class TestGetEmptyDB():
@@ -267,7 +266,7 @@ class TestGet():
         lon = test_location[1]
 
         # test with different radius
-        for radius, count in test_radius.items():
+        for radius, (count, ids) in test_radius.items():
             ret = client.get('/foodtrucks/location?longitude={}&latitude={}&radius={}'.format(lon,lat, radius))
             assert ret.status_code == 200
             data = ret.get_json()['foodtrucks']
@@ -275,10 +274,9 @@ class TestGet():
             # number of returnes items should match expected
             assert len(data) == count
 
-            # every returned element should be within radius distance
-            for e in data:
-                dist = haversine(lat, lon, e['latitude'], e['longitude'])
-                assert dist <= radius
+            # verify that the correct trucks are returned, in the correct order
+            for i, e in enumerate(data):
+                assert test_radius[radius][1][i] == e['uuid']
 
     def test_get_truck_by_location_bad_request(self, client):
         """
@@ -322,11 +320,10 @@ class TestGet():
         # number of returned entries should match expected
         assert len(data) == test_name[1]
 
-        # every returned element should be within radius distance and contain substring name
-        for e in data:
-            dist = haversine(lat, lon, e['latitude'], e['longitude'])
-            assert dist <= app.config['DEFAULT_SEARCH_RADIUS']
-            assert name.lower() in e['name'].lower()
+        # verify that the correct trucks are returned, in the correct order
+        for i, e in enumerate(data):
+            assert test_name[2][i] == e['uuid']
+
 
     def test_get_truck_by_location_and_item(self, app, client):
         """
@@ -350,8 +347,6 @@ class TestGet():
         # number of returned entries should match expected
         assert len(data) == test_item[1]
 
-        # every returned element should be within radius distance and contain substring item
-        for e in data:
-            dist = haversine(lat, lon, e['latitude'], e['longitude'])
-            assert dist <= app.config['DEFAULT_SEARCH_RADIUS']
-            assert item.lower() in e['food_items'].lower()
+        # verify that the correct trucks are returned, in the correct order
+        for i, e in enumerate(data):
+            assert test_item[2][i] == e['uuid']
