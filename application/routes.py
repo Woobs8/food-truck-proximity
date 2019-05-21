@@ -2,6 +2,7 @@ from flask import request, jsonify, abort, make_response, current_app as app
 from .models import FoodTruck, db
 from sqlalchemy.exc import SQLAlchemyError
 
+
 @app.route('/', methods=['GET'])
 def index():
     """
@@ -10,25 +11,30 @@ def index():
     Returns:
         str: JSON string with resource meta data
     """
-    # create dict with metadata and return as JSON
-    entry_count = FoodTruck.query.count()
-    lat_min = db.session.query(db.func.min(FoodTruck.latitude)).scalar()
-    lat_max = db.session.query(db.func.max(FoodTruck.latitude)).scalar()
-    long_min = db.session.query(db.func.min(FoodTruck.longitude)).scalar()
-    long_max = db.session.query(db.func.max(FoodTruck.longitude)).scalar()
-    collection_meta = {
-                        'foodtrucks': {
-                            'name':'SF Food Truck Locator',
-                            'entries':entry_count,
-                            'geo_area':{
-                                'min_latitude':lat_min,
-                                'min_longitude':long_min,
-                                'max_latitude':lat_max,
-                                'max_longitude':long_max
+    try:
+        # create dict with metadata and return as JSON
+        entry_count = FoodTruck.query.count()
+        lat_min = db.session.query(db.func.min(FoodTruck.latitude)).scalar()
+        lat_max = db.session.query(db.func.max(FoodTruck.latitude)).scalar()
+        long_min = db.session.query(db.func.min(FoodTruck.longitude)).scalar()
+        long_max = db.session.query(db.func.max(FoodTruck.longitude)).scalar()
+        collection_meta = {
+                            'foodtrucks': {
+                                'name':'foodtrucks',
+                                'entries':entry_count,
+                                'geo_area':{
+                                    'min_latitude':lat_min,
+                                    'min_longitude':long_min,
+                                    'max_latitude':lat_max,
+                                    'max_longitude':long_max
+                                }
                             }
                         }
-                    }
-    return jsonify(collection_meta)
+        return jsonify(collection_meta)
+    except SQLAlchemyError as e:
+        app.logger.error('error retriveing entry count: %s', e)
+        abort(500, 'Error retrieving foodtrucks entry count')
+
 
 @app.route("/foodtrucks", methods=['GET'])
 def get_all_food_trucks():
@@ -44,9 +50,9 @@ def get_all_food_trucks():
         return jsonify({'foodtrucks': [e.serialize() for e in trucks]})
     except SQLAlchemyError as e:
         app.logger.error('error retriveing all entries: %s', e)
-        abort(500)
+        abort(500, 'Error retrieving resources')
 
-# get food truck by id
+
 @app.route("/foodtrucks/<int:truck_id>", methods=['GET'])
 def get_food_truck(truck_id):
     """
@@ -70,7 +76,8 @@ def get_food_truck(truck_id):
             return jsonify({})
     except SQLAlchemyError as e:
         app.logger.error('error retriveing entry id %d: %s', truck_id, e)
-        abort(500)
+        abort(500, 'Error retriving resource with id {}'.format(truck_id))
+
 
 @app.route("/foodtrucks/<int:truck_id>", methods=['PUT'])
 def update_food_truck(truck_id):
@@ -87,17 +94,17 @@ def update_food_truck(truck_id):
     """
     # validate JSON request
     if not request.json:
-        abort(400)
+        abort(400, 'Request must be JSON mimetype')
     if not 'name' in request.json or type(request.json['name']) != str:
-        abort(400)
+        abort(400, "invalid or missing 'name' field")
     if not 'longitude' in request.json or type(request.json['longitude']) != float:
-        abort(400)
+        abort(400, "invalid or missing 'longitude' field")
     if not 'latitude' in request.json or type(request.json['latitude']) != float:
-        abort(400)
+        abort(400, "invalid or missing 'latitude' field")
     if not 'days_hours' in request.json or type(request.json['days_hours']) != str:
-        abort(400)
+        abort(400, "invalid or missing 'dayshours' field")
     if not 'food_items' in request.json or type(request.json['food_items']) != str:
-        abort(400)
+        abort(400, "invalid or missing 'food_items' field")
 
     # extract values from request
     name = request.json['name']
@@ -136,7 +143,8 @@ def update_food_truck(truck_id):
     except SQLAlchemyError as e:
         db.session.rollback()
         app.logger.error('error updating entry id %d: %s', truck_id, e)
-        abort(500)
+        abort(500, 'Error updating resource with id {}'.format(truck_id))
+
 
 @app.route("/foodtrucks/<int:truck_id>", methods=['DELETE'])
 def delete_food_truck(truck_id):
@@ -158,7 +166,8 @@ def delete_food_truck(truck_id):
     except SQLAlchemyError as e:
         db.session.rollback()
         app.logger.error('error deleting entry id %d: %s', truck_id, e)
-        abort(500)
+        abort(500, 'Error deleting resource with id {}'.format(truck_id))
+
 
 @app.route("/foodtrucks/name/<string:needle>", methods=['GET'])
 def get_food_trucks_by_name(needle):
@@ -179,7 +188,8 @@ def get_food_trucks_by_name(needle):
         return jsonify({'foodtrucks': [e.serialize() for e in trucks]})
     except SQLAlchemyError as e:
         app.logger.error('error searching for needle %s: %s', needle, e)
-        abort(500)
+        abort(500, 'Error retriving resources by name {}'.format(needle))
+
 
 @app.route("/foodtrucks/items/<string:needle>", methods=['GET'])
 def get_food_trucks_by_items(needle):
@@ -200,7 +210,8 @@ def get_food_trucks_by_items(needle):
         return jsonify({'foodtrucks': [e.serialize() for e in trucks]})
     except SQLAlchemyError as e:
         app.logger.error('error searching for needle %s: %s', needle, e)
-        abort(500)
+        abort(500, 'Error retriving resources by items {}'.format(needle))
+
 
 @app.route("/foodtrucks/location", methods=['GET'])
 def get_nearby_food_trucks():
@@ -236,13 +247,13 @@ def get_nearby_food_trucks():
 
         return jsonify({'foodtrucks': [e.serialize() for e in trucks]})
     except ValueError:
-        abort(400)
+        abort(400, 'Invalid parameter type')
     except SQLAlchemyError as e:
         app.logger.error('error retriveing entries by location=(%d,%d), radius=%d: %s', 
                         latitude, longitude, radius, e)
-        abort(500)
+        abort(500, 'Error retriving resources near location ({},{})'.format(latitude, longitude))
 
-# add truck to resources
+
 @app.route("/foodtrucks", methods=['POST'])
 def add_food_truck():
     """
@@ -255,17 +266,17 @@ def add_food_truck():
     """
     # validate JSON request
     if not request.json:
-        abort(400)
+        abort(400, 'Request must be JSON mimetype')
     if not 'name' in request.json or type(request.json['name']) != str:
-        abort(400)
+        abort(400, "invalid or missing 'name' field")
     if not 'longitude' in request.json or type(request.json['longitude']) != float:
-        abort(400)
+        abort(400, "invalid or missing 'longitude' field")
     if not 'latitude' in request.json or type(request.json['latitude']) != float:
-        abort(400)
+        abort(400, "invalid or missing 'latitude' field")
     if not 'days_hours' in request.json or type(request.json['days_hours']) != str:
-        abort(400)
+        abort(400, "invalid or missing 'dayshours' field")
     if not 'food_items' in request.json or type(request.json['food_items']) != str:
-        abort(400)
+        abort(400, "invalid or missing'food_items' field")
     
     # extract values from request
     name = request.json['name']
@@ -291,28 +302,28 @@ def add_food_truck():
         db.session.rollback()
         app.logger.error('error inserting entry (%s, %d, %d, %s, %s): %s', 
                         name, latitude, longitude, days_hours, food_items, e)
-        abort(500)
+        abort(500, 'Error creating resource')
 
-# bad request
+
 @app.errorhandler(400)
 def bad_request(error):
     """
     Flask error handler for manually invoking 'bad request' response codes
     """
-    return make_response(jsonify({'message': 'Bad request'}), 400)
+    return make_response(jsonify({'code': error.code, 'message': error.description}), 400)
 
-# route not found
+
 @app.errorhandler(404)
 def not_found(error):
     """
     Flask error handler for manually invoking 'resource not found' response codes
     """
-    return make_response(jsonify({'message': 'Resource not found'}), 404)
+    return make_response(jsonify({'code': error.code, 'message': error.description}), 404)
 
-# internal server error
+
 @app.errorhandler(500)
 def internal_error(error):
     """
     Flask error handler for manually invoking 'internal server error' response codes
     """
-    return make_response(jsonify({'message': 'Internal server error'}), 500)
+    return make_response(jsonify({'code': error.code, 'message': error.description}), 500)

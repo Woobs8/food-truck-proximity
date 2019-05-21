@@ -6,8 +6,10 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 from math import ceil
 
+
 db = SQLAlchemy()
 migrate = Migrate()
+
 
 def create_app():
     """

@@ -7,6 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+
 def populate_db():
     """
     Fetches data from the public API https://data.sfgov.org/resource/rqzj-sfat and stores it

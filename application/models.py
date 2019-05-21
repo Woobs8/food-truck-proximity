@@ -52,6 +52,7 @@ class FoodTruck(db.Model):
     days_hours = db.Column(db.String())
     food_items = db.Column(db.String())
 
+
     def __init__(self, name, longitude, latitude, days_hours, food_items):
         self.name = name
         self.longitude = longitude
@@ -59,9 +60,11 @@ class FoodTruck(db.Model):
         self.days_hours = days_hours
         self.food_items = food_items
 
+
     def __repr__(self):
         return '<name {}>'.format(self.name)
-    
+
+
     def serialize(self):
         """
         Returns a dictionary representation of a class instance
@@ -74,6 +77,7 @@ class FoodTruck(db.Model):
             'days_hours':self.days_hours,
             'food_items':self.food_items
         }
+
 
     @hybrid_method
     def great_circle_distance(self, lat, lon):
@@ -93,6 +97,7 @@ class FoodTruck(db.Model):
         """
         return haversine(lat, lon, self.latitude, self.longitude)
 
+
     @great_circle_distance.expression
     def great_circle_distance(cls, lat, lon):
         """
@@ -109,6 +114,7 @@ class FoodTruck(db.Model):
             float: distance between model element and specified coordinate
         """
         return haversine(lat, lon, cls.latitude, cls.longitude, math=func)
+
 
     @classmethod
     def get_food_trucks_within_radius(cls, lat, lon, radius, name=None, item=None):
@@ -132,10 +138,9 @@ class FoodTruck(db.Model):
         radius = float(radius)
 
         # query great-circle distance between coordinate and elements in database
-        stmt = db.session.query(
-                        cls,
-                        cls.great_circle_distance(lat, lon).
-                        label('dist')).subquery()
+        stmt = db.session.query(cls,
+                                cls.great_circle_distance(lat, lon)
+                                .label('dist')).subquery()
         food_truck_alias = aliased(cls, stmt)
 
         # filter by search radius
