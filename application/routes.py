@@ -2,7 +2,7 @@ from flask import request, jsonify, abort, make_response, current_app as app
 from .models import FoodTruck, db
 from sqlalchemy.exc import SQLAlchemyError
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET'])
 def index():
     """
     Application root endpoint returns metadata about resource collection
@@ -16,13 +16,18 @@ def index():
     lat_max = db.session.query(db.func.max(FoodTruck.latitude)).scalar()
     long_min = db.session.query(db.func.min(FoodTruck.longitude)).scalar()
     long_max = db.session.query(db.func.max(FoodTruck.longitude)).scalar()
-    collection_meta = {'name':'SF Food Truck Locator',
-                        'entries':entry_count,
-                        'geo_area':{
-                        'min_latitude':lat_min,
-                        'min_longitude':long_min,
-                        'max_latitude':lat_max,
-                        'max_longitude':long_max}}
+    collection_meta = {
+                        'foodtrucks': {
+                            'name':'SF Food Truck Locator',
+                            'entries':entry_count,
+                            'geo_area':{
+                                'min_latitude':lat_min,
+                                'min_longitude':long_min,
+                                'max_latitude':lat_max,
+                                'max_longitude':long_max
+                            }
+                        }
+                    }
     return jsonify(collection_meta)
 
 @app.route("/foodtrucks", methods=['GET'])
@@ -36,7 +41,7 @@ def get_all_food_trucks():
     try:
         # query all trucks in the database
         trucks = FoodTruck.query.all()
-        return jsonify([e.serialize() for e in trucks])
+        return jsonify({'foodtrucks': [e.serialize() for e in trucks]})
     except SQLAlchemyError as e:
         app.logger.error('error retriveing all entries: %s', e)
         abort(500)
@@ -127,7 +132,7 @@ def update_food_truck(truck_id):
         # commit changes to database
         db.session.commit()
         app.logger.info('successfully updated entry id %d', truck_id)
-        return make_response(jsonify({'food_truck': truck.serialize()}), 200)
+        return make_response(jsonify(truck.serialize()), 200)
     except SQLAlchemyError as e:
         db.session.rollback()
         app.logger.error('error updating entry id %d: %s', truck_id, e)
@@ -149,7 +154,7 @@ def delete_food_truck(truck_id):
         truck = FoodTruck.query.filter_by(uuid=truck_id).delete()
         db.session.commit()
         app.logger.info('successfully deleted entry id %d', truck_id)
-        return make_response(jsonify({'succes': 'Entry deleted'}), 200)
+        return make_response(jsonify({'message': 'Entry deleted'}), 200)
     except SQLAlchemyError as e:
         db.session.rollback()
         app.logger.error('error deleting entry id %d: %s', truck_id, e)
@@ -171,7 +176,7 @@ def get_food_trucks_by_name(needle):
     # query by trucks where needle is a case-insensitive substring of name
     try:
         trucks = FoodTruck.query.filter(FoodTruck.name.ilike('%{}%'.format(needle)))
-        return jsonify([e.serialize() for e in trucks])
+        return jsonify({'foodtrucks': [e.serialize() for e in trucks]})
     except SQLAlchemyError as e:
         app.logger.error('error searching for needle %s: %s', needle, e)
         abort(500)
@@ -192,7 +197,7 @@ def get_food_trucks_by_items(needle):
     # query by trucks where needle is a case-insensitive substring of food_items
     try:
         trucks = FoodTruck.query.filter(FoodTruck.food_items.ilike('%{}%'.format(needle)))
-        return jsonify([e.serialize() for e in trucks])
+        return jsonify({'foodtrucks': [e.serialize() for e in trucks]})
     except SQLAlchemyError as e:
         app.logger.error('error searching for needle %s: %s', needle, e)
         abort(500)
@@ -239,7 +244,7 @@ def get_nearby_food_trucks():
             item = item.lower()
             trucks = [e for e in trucks if item in e.food_items.lower()]
 
-        return jsonify([e.serialize() for e in trucks])
+        return jsonify({'foodtrucks': [e.serialize() for e in trucks]})
     except ValueError:
         abort(400)
     except SQLAlchemyError as e:
@@ -291,7 +296,7 @@ def add_food_truck():
         db.session.add(truck)
         db.session.commit()
         app.logger.info('successfully inserted entry with id %d', truck.uuid)
-        return make_response(jsonify({'food_truck': truck.serialize()}), 201)
+        return make_response(jsonify(truck.serialize()), 201)
     except SQLAlchemyError as e:
         db.session.rollback()
         app.logger.error('error inserting entry (%s, %d, %d, %s, %s): %s', 
@@ -304,7 +309,7 @@ def bad_request(error):
     """
     Flask error handler for manually invoking 'bad request' response codes
     """
-    return make_response(jsonify({'error': 'Bad request'}), 400)
+    return make_response(jsonify({'message': 'Bad request'}), 400)
 
 # route not found
 @app.errorhandler(404)
@@ -312,7 +317,7 @@ def not_found(error):
     """
     Flask error handler for manually invoking 'resource not found' response codes
     """
-    return make_response(jsonify({'error': 'Resource not found'}), 404)
+    return make_response(jsonify({'message': 'Resource not found'}), 404)
 
 # internal server error
 @app.errorhandler(500)
@@ -320,4 +325,4 @@ def internal_error(error):
     """
     Flask error handler for manually invoking 'internal server error' response codes
     """
-    return make_response(jsonify({'error': 'Internal server error'}), 500)
+    return make_response(jsonify({'message': 'Internal server error'}), 500)

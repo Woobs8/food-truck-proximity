@@ -14,7 +14,7 @@ class TestPut():
     2. Create database table
     3. Populate database with predefined elements
     """
-    
+
     def test_update_truck(self, client):
         """
         Test PUT request to update existing FoodTruck.
@@ -36,7 +36,7 @@ class TestPut():
                     'food_items':'sandwiches'}
         
         ret = client.put('/foodtrucks/{}'.format(uuid), data=json.dumps(put_data), headers=headers)
-        ret_data = ret.get_json()['food_truck']
+        ret_data = ret.get_json()
         
         # validate response
         assert ret.status_code == 200
@@ -76,7 +76,7 @@ class TestPut():
                     'food_items':'sandwiches'}
         
         ret = client.put('/foodtrucks/{}'.format(uuid), data=json.dumps(put_data), headers=headers)
-        ret_data = ret.get_json()['food_truck']
+        ret_data = ret.get_json()
         
         # validate response
         assert ret.status_code == 200

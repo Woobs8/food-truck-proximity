@@ -24,7 +24,7 @@ class TestGetEmptyDB():
         """
         ret = client.get('/')
         assert ret.status_code == 200
-        data = ret.get_json()
+        data = ret.get_json()['foodtrucks']
         assert data['entries'] == 0
 
     def test_get_all_empty_db(self, client):
@@ -37,7 +37,7 @@ class TestGetEmptyDB():
         """
         ret = client.get('/foodtrucks')
         assert ret.status_code == 200
-        data = ret.get_json()
+        data = ret.get_json()['foodtrucks']
         assert len(data) == 0
 
     def test_get_truck_by_id_empty_db(self, client):
@@ -64,7 +64,7 @@ class TestGetEmptyDB():
         name = test_name[0]
         ret = client.get('/foodtrucks/name/{}'.format(name))
         assert ret.status_code == 200
-        data = ret.get_json()
+        data = ret.get_json()['foodtrucks']
         assert len(data) == 0
 
     def test_get_truck_by_item_empty_db(self, client):
@@ -78,7 +78,7 @@ class TestGetEmptyDB():
         item = test_item[0]
         ret = client.get('/foodtrucks/items/{}'.format(item))
         assert ret.status_code == 200
-        data = ret.get_json()
+        data = ret.get_json()['foodtrucks']
         assert len(data) == 0
 
     def test_get_truck_by_location_empty_db(self, client):
@@ -94,7 +94,7 @@ class TestGetEmptyDB():
 
         ret = client.get('/foodtrucks/location?longitude={}&latitude={}'.format(lon,lat))
         assert ret.status_code == 200
-        data = ret.get_json()
+        data = ret.get_json()['foodtrucks']
         assert len(data) == 0
 
 
@@ -119,7 +119,7 @@ class TestGet():
         """
         ret = client.get('/')
         assert ret.status_code == 200
-        assert ret.get_json()['entries'] == len(test_data)
+        assert ret.get_json()['foodtrucks']['entries'] == len(test_data)
 
     def test_get_all(self, client):
         """
@@ -131,7 +131,7 @@ class TestGet():
         """
         ret = client.get('/foodtrucks')
         assert ret.status_code == 200
-        data = ret.get_json()
+        data = ret.get_json()['foodtrucks']
         assert len(data) == len(test_data)
 
     def test_get_truck_by_id(self, client):
@@ -182,7 +182,7 @@ class TestGet():
         name = test_name[0].lower()
         ret = client.get('/foodtrucks/name/{}'.format(name))
         assert ret.status_code == 200
-        data = ret.get_json()
+        data = ret.get_json()['foodtrucks']
 
         # number of returnes items should match expected
         assert len(data) == test_name[1]
@@ -203,7 +203,7 @@ class TestGet():
         name = test_name[0].upper()
         ret = client.get('/foodtrucks/name/{}'.format(name))
         assert ret.status_code == 200
-        data = ret.get_json()
+        data = ret.get_json()['foodtrucks']
 
         # number of returnes items should match expected
         assert len(data) == test_name[1]
@@ -224,7 +224,7 @@ class TestGet():
         item = test_item[0].lower()
         ret = client.get('/foodtrucks/items/{}'.format(item))
         assert ret.status_code == 200
-        data = ret.get_json()
+        data = ret.get_json()['foodtrucks']
 
         # number of returnes items should match expected
         assert len(data) == test_item[1]
@@ -245,7 +245,7 @@ class TestGet():
         item = test_item[0].upper()
         ret = client.get('/foodtrucks/items/{}'.format(item))
         assert ret.status_code == 200
-        data = ret.get_json()
+        data = ret.get_json()['foodtrucks']
 
         # number of returnes items should match expected
         assert len(data) == test_item[1]
@@ -270,7 +270,7 @@ class TestGet():
         for radius, count in test_radius.items():
             ret = client.get('/foodtrucks/location?longitude={}&latitude={}&radius={}'.format(lon,lat, radius))
             assert ret.status_code == 200
-            data = ret.get_json()
+            data = ret.get_json()['foodtrucks']
 
             # number of returnes items should match expected
             assert len(data) == count
@@ -317,7 +317,7 @@ class TestGet():
 
         ret = client.get('/foodtrucks/location?longitude={}&latitude={}&name={}'.format(lon,lat,name))
         assert ret.status_code == 200
-        data = ret.get_json()
+        data = ret.get_json()['foodtrucks']
 
         # number of returned entries should match expected
         assert len(data) == test_name[1]
@@ -345,7 +345,7 @@ class TestGet():
 
         ret = client.get('/foodtrucks/location?longitude={}&latitude={}&item={}'.format(lon,lat,item))
         assert ret.status_code == 200
-        data = ret.get_json()
+        data = ret.get_json()['foodtrucks']
 
         # number of returned entries should match expected
         assert len(data) == test_item[1]

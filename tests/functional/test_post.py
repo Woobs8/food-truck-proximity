@@ -13,19 +13,6 @@ class TestPost():
     1. Initialize application
     2. Create database table
     """
-
-    def test_post_root(self, client):
-        """
-        Test the POST request to the application root endpoint
-
-        1. Send POST request to the application root
-        2. Verify the status code as successful
-        3. Verify the metadata against the predefined database elements
-        """
-        ret = client.post('/')
-        assert ret.status_code == 200
-        data = ret.get_json()
-        assert data['entries'] == 0
     
     def test_post_truck(self, client):
         """
@@ -47,7 +34,7 @@ class TestPost():
                     'food_items':'sandwiches'}
         
         ret = client.post('/foodtrucks', data=json.dumps(post_data), headers=headers)
-        ret_data = ret.get_json()['food_truck']
+        ret_data = ret.get_json()
 
         # validate response
         assert ret.status_code == 201
