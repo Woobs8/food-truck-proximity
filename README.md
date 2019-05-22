@@ -137,8 +137,9 @@ By adding a _user_ columns to the database of food trucks, and filling that colu
 
 The architecture of the service with authentication would be as shown below:
 
-<p align="center">
-    <img src="docs/img/service_architecture_with_auth.png" width="350" alt="Tech Stack"/>
+<p float="left">
+    <img src="docs/img/service_architecture_with_auth.png" width="280" alt="Tech Stack"/>
+    <img src="docs/img/auth_sequence.png" width="340" alt="Tech Stack"/>
 </p>
 
 ### Query by Business Hours
