@@ -1,4 +1,4 @@
-from .haversine import haversine
+from application.haversine import haversine
 from sqlalchemy.ext.hybrid import hybrid_method
 from sqlalchemy import func
 from sqlalchemy.orm import aliased

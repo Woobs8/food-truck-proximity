@@ -1,6 +1,6 @@
 from flask import request, jsonify, make_response, Blueprint
 
-
+# error handling blueprint
 error_handlers = Blueprint('error_handlers', __name__)
 
 
