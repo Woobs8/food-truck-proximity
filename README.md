@@ -135,11 +135,11 @@ My intention was to use JSON web tokens (JWT) to authenticate requests. The syst
 
 By adding a _user_ columns to the database of food trucks, and filling that column with the user id retrieved from the JWT in the POST or PUT request that created the entry, each entry would be associated with the user that created it. The service would then be able to restrict POST/PUT/DELETE access to a given resource to a specific user.
 
-The architecture of the service with authentication would be as shown below:
+The proposed architecture of the service with authentication is shown below, including a sequence diagram illustrating the proposed authentication procedure for a client:
 
 <p float="left">
-    <img src="docs/img/service_architecture_with_auth.png" width="280" alt="Tech Stack"/>
-    <img src="docs/img/auth_sequence.png" width="340" alt="Tech Stack"/>
+    <img src="docs/img/service_architecture_with_auth.png" width="350" alt="Tech Stack"/>
+    <img src="docs/img/auth_sequence.png" width="500" alt="Tech Stack"/>
 </p>
 
 ### Query by Business Hours
