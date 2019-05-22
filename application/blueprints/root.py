@@ -35,5 +35,5 @@ def index():
                             }
         return jsonify(collection_meta)
     except SQLAlchemyError as e:
-        current_app.logger.error('error retriveing entry count: %s', e)
-        abort(500, 'Error retrieving foodtrucks entry count')
+        current_app.logger.error('error retriveing foodtrucks metadata: %s', e)
+        abort(500, 'Error retrieving foodtrucks metadata')
