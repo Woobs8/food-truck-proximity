@@ -290,7 +290,7 @@ class TestGet():
 
             # verify that the correct trucks are returned, in the correct order
             for i, e in enumerate(data):
-                assert test_radius[radius][1][i] == e['uuid']
+                assert ids[i] == e['uuid']
 
 
     def test_get_truck_by_location_bad_request(self, client):

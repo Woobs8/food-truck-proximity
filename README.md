@@ -81,7 +81,7 @@ Flask is a lightweight web framework for Python. I did not have any previous exp
 
 ### Application
 #### Architecture
-The application is designed as a web application using the traditional Model-View-Controller architecture. The application consists of a `models.py` module, which contains the database model used by the ORM to interact with the database, a `routes.py` module which is the controller that interarcts with the model to create and return views. Since there is no frontend, the views are simply the returned JSON representation of requested resources.
+The application is designed as a web application using the traditional Model-View-Controller architecture. The`models.py` module implements the model of the application and contains the database model used by the ORM to interact with the database. The `blueprints` directory contains the controller, defining the application behavior for the API endpoints and interacting with the model. Since there is no frontend, the views are simply the returned JSON representation of requested resources.
 
 The Flask application factory itself is defined in the `__init__.py` module. The flask extension libraries `flask-migrate` and `flask-script` are used to create a `manage.py` script for managing and performing database migrations. The ability to migrate the database is not required for the current application, but is a nice feature if one were to continue development of the application, and add features that would require database schema changes in the future.
 

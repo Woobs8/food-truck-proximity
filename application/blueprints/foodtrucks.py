@@ -1,42 +1,12 @@
-from flask import request, jsonify, abort, make_response, current_app as app
-from .models import FoodTruck, db
+from flask import request, jsonify, abort, make_response, Blueprint, current_app
+from application.models import FoodTruck, db
 from sqlalchemy.exc import SQLAlchemyError
 
 
-@app.route('/', methods=['GET'])
-def index():
-    """
-    Application root endpoint returns metadata about resource collection
-
-    Returns:
-        str: JSON string with resource meta data
-    """
-    try:
-        # create dict with metadata and return as JSON
-        entry_count = FoodTruck.query.count()
-        lat_min = db.session.query(db.func.min(FoodTruck.latitude)).scalar()
-        lat_max = db.session.query(db.func.max(FoodTruck.latitude)).scalar()
-        long_min = db.session.query(db.func.min(FoodTruck.longitude)).scalar()
-        long_max = db.session.query(db.func.max(FoodTruck.longitude)).scalar()
-        collection_meta = {
-                            'foodtrucks': {
-                                'name':'foodtrucks',
-                                'entries':entry_count,
-                                'geo_area':{
-                                    'min_latitude':lat_min,
-                                    'min_longitude':long_min,
-                                    'max_latitude':lat_max,
-                                    'max_longitude':long_max
-                                }
-                            }
-                        }
-        return jsonify(collection_meta)
-    except SQLAlchemyError as e:
-        app.logger.error('error retriveing entry count: %s', e)
-        abort(500, 'Error retrieving foodtrucks entry count')
+foodtrucks = Blueprint('foodtrucks', __name__)
 
 
-@app.route("/foodtrucks", methods=['GET'])
+@foodtrucks.route("", methods=['GET'])
 def get_all_food_trucks():
     """
     GET /foodtrucks endpoint returns all resources in collection /foodtrucks
@@ -49,11 +19,11 @@ def get_all_food_trucks():
         trucks = FoodTruck.query.all()
         return jsonify({'foodtrucks': [e.serialize() for e in trucks]})
     except SQLAlchemyError as e:
-        app.logger.error('error retriveing all entries: %s', e)
+        current_app.logger.error('error retriveing all entries: %s', e)
         abort(500, 'Error retrieving resources')
 
 
-@app.route("/foodtrucks/<int:truck_id>", methods=['GET'])
+@foodtrucks.route("/<int:truck_id>", methods=['GET'])
 def get_food_truck(truck_id):
     """
     GET /foodtrucks/<id> endpoint returns /foodtrucks resource with specific id
@@ -75,11 +45,11 @@ def get_food_truck(truck_id):
         else:
             return jsonify({})
     except SQLAlchemyError as e:
-        app.logger.error('error retriveing entry id %d: %s', truck_id, e)
+        current_app.logger.error('error retriveing entry id %d: %s', truck_id, e)
         abort(500, 'Error retriving resource with id {}'.format(truck_id))
 
 
-@app.route("/foodtrucks/<int:truck_id>", methods=['PUT'])
+@foodtrucks.route("/<int:truck_id>", methods=['PUT'])
 def update_food_truck(truck_id):
     """
     PUT /foodtrucks/<id> endpoint updates or creates /foodtrucks resource with specific id
@@ -138,15 +108,15 @@ def update_food_truck(truck_id):
         
         # commit changes to database
         db.session.commit()
-        app.logger.info('successfully updated entry id %d', truck_id)
+        current_app.logger.info('successfully updated entry id %d', truck_id)
         return make_response(jsonify(truck.serialize()), 200)
     except SQLAlchemyError as e:
         db.session.rollback()
-        app.logger.error('error updating entry id %d: %s', truck_id, e)
+        current_app.logger.error('error updating entry id %d: %s', truck_id, e)
         abort(500, 'Error updating resource with id {}'.format(truck_id))
 
 
-@app.route("/foodtrucks/<int:truck_id>", methods=['DELETE'])
+@foodtrucks.route("/<int:truck_id>", methods=['DELETE'])
 def delete_food_truck(truck_id):
     """
     DELETE /foodtrucks/<id> endpoint deletes /foodtrucks resource with specific id
@@ -159,17 +129,17 @@ def delete_food_truck(truck_id):
     """
     # delete truck with id if it exists
     try:
-        truck = FoodTruck.query.filter_by(uuid=truck_id).delete()
+        FoodTruck.query.filter_by(uuid=truck_id).delete()
         db.session.commit()
-        app.logger.info('successfully deleted entry id %d', truck_id)
+        current_app.logger.info('successfully deleted entry id %d', truck_id)
         return make_response(jsonify({'message': 'Entry deleted'}), 200)
     except SQLAlchemyError as e:
         db.session.rollback()
-        app.logger.error('error deleting entry id %d: %s', truck_id, e)
+        current_app.logger.error('error deleting entry id %d: %s', truck_id, e)
         abort(500, 'Error deleting resource with id {}'.format(truck_id))
 
 
-@app.route("/foodtrucks/name/<string:needle>", methods=['GET'])
+@foodtrucks.route("/name/<string:needle>", methods=['GET'])
 def get_food_trucks_by_name(needle):
     """
     GET /foodtrucks/name/<needle> endpoint returns resources in /foodtrucks 
@@ -187,11 +157,11 @@ def get_food_trucks_by_name(needle):
         trucks = FoodTruck.query.filter(FoodTruck.name.ilike('%{}%'.format(needle)))
         return jsonify({'foodtrucks': [e.serialize() for e in trucks]})
     except SQLAlchemyError as e:
-        app.logger.error('error searching for needle %s: %s', needle, e)
+        current_app.logger.error('error searching for needle %s: %s', needle, e)
         abort(500, 'Error retriving resources by name {}'.format(needle))
 
 
-@app.route("/foodtrucks/items/<string:needle>", methods=['GET'])
+@foodtrucks.route("/items/<string:needle>", methods=['GET'])
 def get_food_trucks_by_items(needle):
     """
     GET /foodtrucks/items/<needle> endpoint returns resources in /foodtrucks 
@@ -209,11 +179,11 @@ def get_food_trucks_by_items(needle):
         trucks = FoodTruck.query.filter(FoodTruck.food_items.ilike('%{}%'.format(needle)))
         return jsonify({'foodtrucks': [e.serialize() for e in trucks]})
     except SQLAlchemyError as e:
-        app.logger.error('error searching for needle %s: %s', needle, e)
+        current_app.logger.error('error searching for needle %s: %s', needle, e)
         abort(500, 'Error retriving resources by items {}'.format(needle))
 
 
-@app.route("/foodtrucks/location", methods=['GET'])
+@foodtrucks.route("/location", methods=['GET'])
 def get_nearby_food_trucks():
     """
     GET /foodtrucks/location/<params> endpoint returns resource in /foodtrucks within
@@ -235,7 +205,7 @@ def get_nearby_food_trucks():
     # search radius argument is optional (default if not present)
     radius = request.args.get('radius')
     if radius is None:
-        radius = app.config['DEFAULT_SEARCH_RADIUS']
+        radius = current_app.config['DEFAULT_SEARCH_RADIUS']
 
     # name and item filter arguments are optional
     name = request.args.get('name')
@@ -249,12 +219,12 @@ def get_nearby_food_trucks():
     except ValueError:
         abort(400, 'Invalid parameter type')
     except SQLAlchemyError as e:
-        app.logger.error('error retriveing entries by location=(%d,%d), radius=%d: %s', 
+        current_app.logger.error('error retriveing entries by location=(%d,%d), radius=%d: %s', 
                         latitude, longitude, radius, e)
         abort(500, 'Error retriving resources near location ({},{})'.format(latitude, longitude))
 
 
-@app.route("/foodtrucks", methods=['POST'])
+@foodtrucks.route("", methods=['POST'])
 def add_food_truck():
     """
     POST /foodtrucks/<id> endpoint creates a /foodtrucks resource
@@ -296,34 +266,10 @@ def add_food_truck():
         )
         db.session.add(truck)
         db.session.commit()
-        app.logger.info('successfully inserted entry with id %d', truck.uuid)
+        current_app.logger.info('successfully inserted entry with id %d', truck.uuid)
         return make_response(jsonify(truck.serialize()), 201)
     except SQLAlchemyError as e:
         db.session.rollback()
-        app.logger.error('error inserting entry (%s, %d, %d, %s, %s): %s', 
+        current_app.logger.error('error inserting entry (%s, %d, %d, %s, %s): %s', 
                         name, latitude, longitude, days_hours, food_items, e)
         abort(500, 'Error creating resource')
-
-
-@app.errorhandler(400)
-def bad_request(error):
-    """
-    Flask error handler for manually invoking 'bad request' response codes
-    """
-    return make_response(jsonify({'code': error.code, 'message': error.description}), 400)
-
-
-@app.errorhandler(404)
-def not_found(error):
-    """
-    Flask error handler for manually invoking 'resource not found' response codes
-    """
-    return make_response(jsonify({'code': error.code, 'message': error.description}), 404)
-
-
-@app.errorhandler(500)
-def internal_error(error):
-    """
-    Flask error handler for manually invoking 'internal server error' response codes
-    """
-    return make_response(jsonify({'code': error.code, 'message': error.description}), 500)

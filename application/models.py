@@ -1,8 +1,11 @@
-from . import db
 from .haversine import haversine
 from sqlalchemy.ext.hybrid import hybrid_method
 from sqlalchemy import func
 from sqlalchemy.orm import aliased
+from flask_sqlalchemy import SQLAlchemy
+
+
+db = SQLAlchemy()
 
 
 class FoodTruck(db.Model):
@@ -103,8 +106,8 @@ class FoodTruck(db.Model):
         """
         Calculates the distance between an element in the FoodTruck model 
         and the location specified by the coordinates lat(itude) and lon(gitude).
-        The Hybrid_method.expression defines class-level behavior for method, and
-        is processed on a database level in SQL.
+        The Hybrid_method.expression defines class-level behavior for the method, 
+        and is processed on a database level in SQL.
 
         Parameters:
             lat (float): latitude coordinate in decimal format
@@ -137,7 +140,7 @@ class FoodTruck(db.Model):
         lon = float(lon)
         radius = float(radius)
 
-        # query great-circle distance between coordinate and elements in database
+        # subquery great-circle distance between coordinate and elements in database
         stmt = db.session.query(cls,
                                 cls.great_circle_distance(lat, lon)
                                 .label('dist')).subquery()

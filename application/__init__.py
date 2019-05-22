@@ -1,13 +1,15 @@
 import os
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import logging
 from logging.handlers import TimedRotatingFileHandler
 from math import ceil
+from .models import db
+from .blueprints.root import root 
+from .blueprints.foodtrucks import foodtrucks 
+from .blueprints.error_handlers import error_handlers
 
 
-db = SQLAlchemy()
 migrate = Migrate()
 
 
@@ -37,12 +39,14 @@ def create_app():
     handler.setFormatter(formatter)
 
     with app.app_context():
-        # import routes
-        from . import routes
-
         # initialize extensions
         db.init_app(app)
         migrate.init_app(app, db)
         app.logger.addHandler(handler)
+        
+        # register blueprints
+        app.register_blueprint(root, url_prefix="/")
+        app.register_blueprint(foodtrucks, url_prefix="/foodtrucks")
+        app.register_blueprint(error_handlers)
 
         return app
