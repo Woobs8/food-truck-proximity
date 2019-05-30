@@ -10,7 +10,7 @@ class FoodTrucksNameAPI(MethodView):
 
     Methods
     -------
-    get(truck_id)
+    get(needle)
         implements the GET /foodtrucks/name/<string: needle> endpoint
 
     """
