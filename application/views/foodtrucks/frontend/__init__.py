@@ -1,0 +1,1 @@
+from .foodtrucks_location_map import FoodTrucksLocationMap

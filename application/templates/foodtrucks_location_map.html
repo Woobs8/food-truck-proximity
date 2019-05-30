@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Food Truck Locator</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/map.css')}}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="{{url_for('static', filename='scripts/map.js')}}"></script>
+  </head>
+  <body>
+    <div class="slidecontainer">
+        <input type="range" min="1" max="2000" value="500" class="slider" id="radiusRange" name='radius'>
+        <div class="radius-input">
+            <span class="label-text">Search radius:</span>
+            <input id="radius-input" name="radius" value="500">
+            <span class="unit">m</span>
+        </div>
+        <div class="name-input">
+            <span class="label-text">Name:</span>
+            <input id="name-input" name="name" value="">
+        </div> 
+        <div class="items-input">
+            <span class="label-text">Menu items:</span>
+            <input id="items-input" name="menu" value="">
+        </div>
+    </div>
+    <div id="map"></div>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCfaPThEab2z8SiVFsr93rX7V8Q4vHts7U&callback=initMap">
+    </script>
+  </body>
+</html>

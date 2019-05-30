@@ -10,14 +10,14 @@ class FoodTrucksLocationAPI(MethodView):
 
     Methods
     -------
-    get(truck_id)
+    get()
         implements the GET /foodtrucks/location endpoint
 
     """
 
     def get(self):
         """
-        GET /foodtrucks/location/<params> endpoint returns resource in /foodtrucks within
+        GET /foodtrucks/location?<params> endpoint returns resources in /foodtrucks within
         a specified distance of a specified location. 
         
         The request must include latitude and longitude parameters specifying the location 
