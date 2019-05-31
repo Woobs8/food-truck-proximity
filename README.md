@@ -127,6 +127,15 @@ The service is deployed on Heroku at https://food-truck-proximity.herokuapp.com/
 
 The database has been populated with the original data from the [API](https://data.sfgov.org/Economy-and-Community/Mobile-Food-Facility-Permit/rqzj-sfat). Only the entries with non-Null values in the included columns were used, limiting the dataset to 511 entries.
 
+## Frontend Demo
+Based on feedback, a simple frontend has been added to demonstrate how the service may be used by an end-user for locating nearby food trucks. The frontend is an interactive map based on the [Google Maps Javascript API](https://developers.google.com/maps/documentation/javascript/tutorial), where the client can select a location on the map, as well as the search radius, name and menu items to filter results by, and see any food trucks nearby that location. The food trucks are visualized on the map using markers, which the user can mouseover to get details about each truck. As this frontend intended as a PoC, and not as part of the service as such, the functionality has been the focus, and styling is kept at a minimum.
+
+The frontend demo can be found at the endpoint [`/foodtrucks/location/map`](https://food-truck-proximity.herokuapp.com/foodtrucks/location/map).
+
+<p align="center">
+    <img src="docs/img/frontend_demo.png" width=100% alt="Tech Stack"/>
+</p>
+
 ## Omissions, Considerations and Future Work
 ### Authentication
 The most glaring omission is the lack of authentication. I did develop a design for the authentication procedure, but I was unfortunately not able to include it due to time constraints. Whether the GET request should be protected by authentication is dependent on the system, but the POST, PUT and DELETE API endpoints should definitely be protected by authentication to protect the data from misuse and malicious attacks.
