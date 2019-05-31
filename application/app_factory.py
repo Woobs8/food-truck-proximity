@@ -102,9 +102,6 @@ def create_app():
     # disable Flask-SQLAlchemy event system since it is unused
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
-    # initialize database
-    db.init_app(app)
-
     # initialize logging to stream to files in timed increments
     interval = app.config['LOGGING_INTERVAL_HOURS']
     file_count = ceil(app.config['LOGGING_LOG_DURATION'] / interval)
@@ -116,21 +113,20 @@ def create_app():
     formatter = logging.Formatter("[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s")
     handler.setFormatter(formatter)
 
-    with app.app_context():
-        # initialize extensions
-        db.init_app(app)
-        migrate.init_app(app, db)
-        app.logger.addHandler(handler)
-        
-        # register views
-        register_get_api(app, RootAPI, 'root_api', '/')
-        register_api(app, FoodTrucksAPI, 'foodtrucks_api', '/foodtrucks/', pk='truck_id')
-        register_get_api(app, FoodTrucksNameAPI, 'foodtrucks_name_api', '/foodtrucks/name/', pk='needle', pk_type='string')
-        register_get_api(app, FoodTrucksItemsAPI, 'foodtrucks_items_api', '/foodtrucks/items/', pk='needle', pk_type='string')
-        register_get_api(app, FoodTrucksLocationAPI, 'foodtrucks_location_api', '/foodtrucks/location')
-        register_view(app, FoodTrucksLocationMap, 'foodtrucks_location_map', '/foodtrucks/location/map')
-        
-        # register blueprints
-        app.register_blueprint(error_handlers)
+    # initialize extensions
+    db.init_app(app)
+    migrate.init_app(app, db)
+    app.logger.addHandler(handler)
+    
+    # register views
+    register_get_api(app, RootAPI, 'root_api', '/')
+    register_api(app, FoodTrucksAPI, 'foodtrucks_api', '/foodtrucks/', pk='truck_id')
+    register_get_api(app, FoodTrucksNameAPI, 'foodtrucks_name_api', '/foodtrucks/name/', pk='needle', pk_type='string')
+    register_get_api(app, FoodTrucksItemsAPI, 'foodtrucks_items_api', '/foodtrucks/items/', pk='needle', pk_type='string')
+    register_get_api(app, FoodTrucksLocationAPI, 'foodtrucks_location_api', '/foodtrucks/location')
+    register_view(app, FoodTrucksLocationMap, 'foodtrucks_location_map', '/foodtrucks/location/map')
+    
+    # register blueprints
+    app.register_blueprint(error_handlers)
 
-        return app
+    return app

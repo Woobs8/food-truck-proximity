@@ -89,7 +89,7 @@ class FoodTruck(db.Model):
         by the coordinates lat(itude) and lon(gitude). Hybrid_method is a sqlalchemy
         decorator that allows for the definition of both instance-level and
         class-level behavior. This is the instance level method, and it is processed
-        on an application level in Python.
+        as a regular Python statement.
 
         Parameters:
             lat (float): latitude coordinate in decimal format
@@ -105,9 +105,11 @@ class FoodTruck(db.Model):
     def great_circle_distance(cls, lat, lon):
         """
         Calculates the distance between an element in the FoodTruck model 
-        and the location specified by the coordinates lat(itude) and lon(gitude).
-        The Hybrid_method.expression defines class-level behavior for the method, 
-        and is processed on a database level in SQL.
+        and the location specified by the coordinates lat(itude) and lon(gitude). 
+        Hybrid_method is a sqlalchemy decorator that allows for the definition of 
+        both instance-level and class-level behavior. The {Hybrid_method}.expression 
+        decorator defines class-level behavior for the method, and will map the 
+        Python statement to SQL when used in a SQLAlchemy expresseion.
 
         Parameters:
             lat (float): latitude coordinate in decimal format
@@ -122,8 +124,9 @@ class FoodTruck(db.Model):
     @classmethod
     def get_food_trucks_within_radius(cls, lat, lon, radius, name=None, item=None):
         """
-        Queries the database and returns the trucks in the database within a distance
-        of radius from the position specified by lon(gitude) and lat(itude)
+        Class method that queries the database and returns the trucks in the 
+        database within a distance of radius from the position specified by 
+        lon(gitude) and lat(itude).
         
         Parameters:
             lat (float): latitude coordinate in decimal format
