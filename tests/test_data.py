@@ -159,13 +159,11 @@ test_users = [
     {
         'username': 'admin',
         'password': '1234321',
-        'registered_on': datetime.datetime.now(),
         'admin': True
     },
     {
         'username': 'user1',
         'password': '1234',
-        'registered_on': datetime.datetime.now(),
         'admin': False
     },
 ]

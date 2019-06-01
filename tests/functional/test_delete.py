@@ -4,7 +4,7 @@ from test_data import test_data, test_name, test_item, test_location, test_radiu
 import json
 
 
-@pytest.mark.usefixtures('create_db', 'populate_food_truck_db')
+@pytest.mark.usefixtures('create_db', 'populate_user_db', 'populate_food_truck_db')
 class TestDelete():
     """
     Test cases for validating the DELETE endpoint of the application.
@@ -12,19 +12,22 @@ class TestDelete():
 
     1. Initialize application
     2. Create database table
-    3. Populate database with predefined elements
+    4. Populate user database with predefined elements
+    3. Populate food truck database with predefined elements
     """
 
-    def test_delete_existing_truck(self, client):
+    def test_delete_existing_truck(self, client, token):
         """
         Test DELETE request to delete existing FoodTruck.
 
-        1. Send DELETE request to foodtruck with specific id
-        2. Verify the status code as successful
-        3. Verify that the id does not exist in the database
+        1. Login to acquire token
+        2. Send DELETE request to foodtruck with specific id
+        3. Verify the status code as successful
+        4. Verify that the id does not exist in the database
         """
         uuid = 1
-        ret = client.delete('/foodtrucks/{}'.format(uuid))
+        headers = {'Authorization': 'Bearer ' + token}
+        ret = client.delete('/foodtrucks/{}'.format(uuid), headers=headers)
         assert ret.status_code == 200
 
         # validate database
@@ -32,13 +35,15 @@ class TestDelete():
         assert not truck
 
 
-    def test_delete_nonexisting_truck_(self, client):
+    def test_delete_nonexisting_truck_(self, client, token):
         """
         Test DELETE request to delete nonexisting FoodTruck.
 
-        1. Send DELETE request to foodtruck with nonexisting id
-        2. Verify the status code as successful
+        1. Login to acquire token
+        2. Send DELETE request to foodtruck with nonexisting id
+        3. Verify the status code as successful
         """
         uuid = len(test_data)+1
-        ret = client.delete('/foodtrucks/{}'.format(uuid))
+        headers = {'Authorization': 'Bearer ' + token}
+        ret = client.delete('/foodtrucks/{}'.format(uuid), headers=headers)
         assert ret.status_code == 200

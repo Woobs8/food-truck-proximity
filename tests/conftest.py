@@ -2,6 +2,7 @@ import pytest
 from application import create_app
 from application.models import FoodTruck, User, db
 from test_data import test_data, test_users
+import json
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -36,24 +37,6 @@ def client(app):
 
 
 @pytest.fixture(scope='class')
-def populate_food_truck_db(create_db):
-    """
-    A test fixture for populating the food truck database with test data. 
-    Will only run once per test class.
-    """
-    for e in test_data:
-        truck = FoodTruck(
-            name = e['name'],
-            longitude = e['longitude'],
-            latitude = e['latitude'],
-            days_hours = e['days_hours'],
-            food_items = e['food_items']
-        )
-        create_db.session.add(truck)
-    create_db.session.commit()
-
-
-@pytest.fixture(scope='class')
 def populate_user_db(create_db):
     """
     A test fixture for populating the user database with test data. 
@@ -67,3 +50,41 @@ def populate_user_db(create_db):
         )
         create_db.session.add(user)
     create_db.session.commit()
+
+
+@pytest.fixture(scope='class')
+def populate_food_truck_db(create_db, populate_user_db):
+    """
+    A test fixture for populating the food truck database with test data. 
+    Will only run once per test class.
+    """
+    for e in test_data:
+        truck = FoodTruck(
+            name = e['name'],
+            longitude = e['longitude'],
+            latitude = e['latitude'],
+            days_hours = e['days_hours'],
+            food_items = e['food_items'],
+            user_id = 2
+        )
+        create_db.session.add(truck)
+    create_db.session.commit()
+
+
+@pytest.fixture()
+def token(app, client):
+    """
+    A test fixture for logging in and acquiring token
+    """
+    mimetype = 'application/json'
+    headers = {'Content-Type': mimetype,
+                'Accept': mimetype}
+    login_cred = {
+        'username': test_users[1]['username'],
+        'password': test_users[1]['password']
+    }
+    ret = client.post('/auth/login', data=json.dumps(login_cred), headers=headers)
+    assert ret.status_code == 200
+    data = ret.get_json()
+    return data['auth_token']
+    

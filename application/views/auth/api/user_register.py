@@ -5,10 +5,23 @@ from flask.views import MethodView
 
 class UserRegisterAPI(MethodView):
     """
-    User Registration Resource
+    A class used to encapsulate the API for the /auth/register resource
+
+    Methods
+    -------
+    post()
+        implements the POST /auth/register endpoint
     """
 
     def post(self):
+        """
+        POST /auth/register endpoint registers a user
+
+        The request must include JSON data specifying the field values of the resource.
+
+        Returns:
+            str: HTTP status response
+        """
         # get the POST data
         post_data = request.get_json()
 

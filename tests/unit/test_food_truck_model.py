@@ -9,6 +9,7 @@ latitude = 37.7201
 longitude = -122.3886
 days_hours = 'Mon-Fri:8AM-2PM'
 food_items = 'sandwiches'
+user_id = 1
 
 
 @pytest.fixture(scope='module')
@@ -20,11 +21,12 @@ def new_food_truck():
             latitude=latitude,
             longitude=longitude,
             days_hours=days_hours,
-            food_items=food_items)
+            food_items=food_items,
+            user_id=user_id)
     return truck
 
 
-@pytest.mark.usefixtures('create_db', 'populate_food_truck_db')
+@pytest.mark.usefixtures('create_db', 'populate_food_truck_db', 'populate_user_db')
 class TestFoodTruck():
     """
     Unit test the FoodTruck model class
@@ -42,6 +44,7 @@ class TestFoodTruck():
         assert new_food_truck.longitude == longitude
         assert new_food_truck.days_hours == days_hours
         assert new_food_truck.food_items == food_items
+        assert new_food_truck.user_id == user_id
 
 
     def test_food_truck_serialize(self, new_food_truck):

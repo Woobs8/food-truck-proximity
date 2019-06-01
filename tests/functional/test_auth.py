@@ -2,6 +2,7 @@ import pytest
 from application.models import User
 from test_data import test_users
 import json
+import datetime
 
 
 @pytest.mark.usefixtures('create_db', 'populate_user_db')
@@ -104,3 +105,13 @@ class TestAuthentication():
         }
         ret = client.post('/auth/login', data=json.dumps(login_cred), headers=headers)
         assert ret.status_code == 404
+
+
+    def test_get_user_details(self, client, token):
+        headers = {
+            'Authorization': 'Bearer ' + token
+        }
+        ret = client.get('/auth/user', headers=headers)
+        data = ret.get_json()
+        assert data['username'] == test_users[1]['username']
+        assert data['admin'] == test_users[1]['admin']

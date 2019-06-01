@@ -7,9 +7,22 @@ from jwt.exceptions import PyJWTError
 
 class UserLoginAPI(MethodView):
     """
-    User Login Resource
+    A class used to encapsulate the API for the /auth/login resource
+
+    Methods
+    -------
+    post()
+        implements the POST /auth/login endpoint
     """
     def post(self):
+        """
+        POST /auth/login endpoint logs in a user
+
+        The request must include JSON data with the user credentials
+
+        Returns:
+            str: JSON response including the authentication token
+        """
         # get the POST data
         post_data = request.get_json()
 

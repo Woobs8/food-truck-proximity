@@ -43,7 +43,8 @@ def populate_db():
                 longitude=longitude,
                 latitude=latitude,
                 days_hours=days_hours,
-                food_items=food_items
+                food_items=food_items,
+                user_id=None
             )
 
             session.add(truck)

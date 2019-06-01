@@ -4,5 +4,5 @@ from flask_bcrypt import Bcrypt
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 
-from .food_truck import FoodTruck
 from .user import User
+from .food_truck import FoodTruck
