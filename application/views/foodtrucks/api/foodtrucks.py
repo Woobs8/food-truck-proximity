@@ -97,11 +97,11 @@ class FoodTrucksAPI(MethodView):
             )
             db.session.add(truck)
             db.session.commit()
-            current_app.logger.info('successfully inserted entry with id %d', truck.uuid)
+            current_app.logger.info('successfully inserted food truck entry with id %d', truck.uuid)
             return make_response(jsonify(truck.serialize()), 201)
         except SQLAlchemyError as e:
             db.session.rollback()
-            current_app.logger.error('error inserting entry (%s, %d, %d, %s, %s): %s', 
+            current_app.logger.error('error inserting food truck entry (%s, %d, %d, %s, %s): %s', 
                             name, latitude, longitude, days_hours, food_items, e)
             abort(500, 'Error creating resource')
     
@@ -167,11 +167,11 @@ class FoodTrucksAPI(MethodView):
             
             # commit changes to database
             db.session.commit()
-            current_app.logger.info('successfully updated entry id %d', truck_id)
+            current_app.logger.info('successfully updated food truck entry id %d', truck_id)
             return make_response(jsonify(truck.serialize()), 200)
         except SQLAlchemyError as e:
             db.session.rollback()
-            current_app.logger.error('error updating entry id %d: %s', truck_id, e)
+            current_app.logger.error('error updating food truck entry id %d: %s', truck_id, e)
             abort(500, 'Error updating resource with id {}'.format(truck_id))
     
 
@@ -189,10 +189,10 @@ class FoodTrucksAPI(MethodView):
         try:
             FoodTruck.query.filter_by(uuid=truck_id).delete()
             db.session.commit()
-            current_app.logger.info('successfully deleted entry id %d', truck_id)
+            current_app.logger.info('successfully deleted food truck entry id %d', truck_id)
             return make_response(jsonify({'message': 'Entry deleted'}), 200)
         except SQLAlchemyError as e:
             db.session.rollback()
-            current_app.logger.error('error deleting entry id %d: %s', truck_id, e)
+            current_app.logger.error('error deleting food truck entry id %d: %s', truck_id, e)
             abort(500, 'Error deleting resource with id {}'.format(truck_id))
 

@@ -1,7 +1,7 @@
 import pytest
 from application import create_app
-from application.models import FoodTruck, db
-from test_data import test_data
+from application.models import FoodTruck, User, db
+from test_data import test_data, test_users
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -36,13 +36,13 @@ def client(app):
 
 
 @pytest.fixture(scope='class')
-def populate_db(create_db):
+def populate_food_truck_db(create_db):
     """
-    A test fixture for populating the database with test data. 
+    A test fixture for populating the food truck database with test data. 
     Will only run once per test class.
     """
     for e in test_data:
-        truck=FoodTruck(
+        truck = FoodTruck(
             name = e['name'],
             longitude = e['longitude'],
             latitude = e['latitude'],
@@ -50,4 +50,20 @@ def populate_db(create_db):
             food_items = e['food_items']
         )
         create_db.session.add(truck)
+    create_db.session.commit()
+
+
+@pytest.fixture(scope='class')
+def populate_user_db(create_db):
+    """
+    A test fixture for populating the user database with test data. 
+    Will only run once per test class.
+    """
+    for e in test_users:
+        user = User(
+            username = e['username'],
+            password = e['password'],
+            admin = e['admin']
+        )
+        create_db.session.add(user)
     create_db.session.commit()

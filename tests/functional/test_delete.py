@@ -4,7 +4,7 @@ from test_data import test_data, test_name, test_item, test_location, test_radiu
 import json
 
 
-@pytest.mark.usefixtures('create_db', 'populate_db')
+@pytest.mark.usefixtures('create_db', 'populate_food_truck_db')
 class TestDelete():
     """
     Test cases for validating the DELETE endpoint of the application.

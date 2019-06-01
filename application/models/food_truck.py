@@ -3,10 +3,7 @@ from sqlalchemy.ext.hybrid import hybrid_method
 from sqlalchemy import func
 from sqlalchemy.orm import aliased
 from flask_sqlalchemy import SQLAlchemy
-
-
-db = SQLAlchemy()
-
+from . import db
 
 class FoodTruck(db.Model):
     """

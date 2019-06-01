@@ -4,11 +4,12 @@ from flask_migrate import Migrate
 import logging
 from logging.handlers import TimedRotatingFileHandler
 from math import ceil
-from .models import FoodTruck, db
+from .models import FoodTruck, db, bcrypt
 from .blueprints import error_handlers
 from .views.root import RootAPI
 from .views.foodtrucks.api import FoodTrucksAPI, FoodTrucksItemsAPI, FoodTrucksLocationAPI, FoodTrucksNameAPI
 from .views.foodtrucks.frontend import FoodTrucksLocationMap
+from .views.auth.api import UserAPI, UserLoginAPI, UserRegisterAPI
 
 
 migrate = Migrate()
@@ -43,6 +44,24 @@ def register_get_api(app, view, endpoint, url, pk=None, pk_type='int'):
                     methods=['GET',])
 
         app.add_url_rule(url, view_func=view_func, methods=['GET',])
+
+
+def register_post_api(app, view, endpoint, url):
+    """
+    Register a view to an endpoint for a specified url. Only registers
+    a POST request.
+
+    Parameters:
+        app (object): Flask app
+        view (View): Flask view to register with endpoint
+        endpoint (str): endpoint to register
+        url (str): url to register endpoint at
+
+    Returns:
+        -
+    """
+    view_func = view.as_view(endpoint)
+    app.add_url_rule(url, view_func=view_func, methods=['POST',])
 
 
 def register_api(app, view, endpoint, url, pk='id', pk_type='int'):
@@ -112,14 +131,15 @@ def create_app():
     handler.setLevel(logging.INFO)
     formatter = logging.Formatter("[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s")
     handler.setFormatter(formatter)
-
-    # initialize extensions
-    db.init_app(app)
-    migrate.init_app(app, db)
-    app.logger.addHandler(handler)
     
     # make current_app context available
     with app.app_context():
+        # initialize extensions
+        db.init_app(app)
+        bcrypt.init_app(app)
+        migrate.init_app(app, db)
+        app.logger.addHandler(handler)
+
         # register views
         register_get_api(app, RootAPI, 'root_api', '/')
         register_api(app, FoodTrucksAPI, 'foodtrucks_api', '/foodtrucks/', pk='truck_id')
@@ -127,6 +147,9 @@ def create_app():
         register_get_api(app, FoodTrucksItemsAPI, 'foodtrucks_items_api', '/foodtrucks/items/', pk='needle', pk_type='string')
         register_get_api(app, FoodTrucksLocationAPI, 'foodtrucks_location_api', '/foodtrucks/location')
         register_view(app, FoodTrucksLocationMap, 'foodtrucks_location_map', '/foodtrucks/location/map')
+        register_get_api(app, UserAPI, 'user_api', '/auth/user')
+        register_post_api(app, UserRegisterAPI, 'user_register_api', '/auth/register')
+        register_post_api(app, UserLoginAPI, 'user_login_api', '/auth/login')
         
         # register blueprints
         app.register_blueprint(error_handlers)

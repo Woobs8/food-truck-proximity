@@ -24,7 +24,7 @@ def new_food_truck():
     return truck
 
 
-@pytest.mark.usefixtures('create_db', 'populate_db')
+@pytest.mark.usefixtures('create_db', 'populate_food_truck_db')
 class TestFoodTruck():
     """
     Unit test the FoodTruck model class
