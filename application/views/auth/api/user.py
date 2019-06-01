@@ -2,7 +2,7 @@ from flask import request, jsonify, abort, make_response, current_app
 from application.models import User, db
 from sqlalchemy.exc import SQLAlchemyError
 from flask.views import MethodView
-from application.views.authentication import get_token_from_header
+from application.views.authentication import get_token_from_header, get_user_id_from_token
 
 class UserAPI(MethodView):
     """
@@ -29,11 +29,10 @@ class UserAPI(MethodView):
 
         # token must be present
         if auth_token:
+            # get user id from token payload
+            user_id = get_user_id_from_token(auth_token)
+            
             try:
-                # get user id from token payload
-                payload = User.decode_auth_token(auth_token)
-                user_id = payload['sub']
-
                 # get user details from database
                 user = User.query.filter_by(id=user_id).first()
 
