@@ -10,6 +10,10 @@ from .views.root import RootAPI
 from .views.foodtrucks.api import FoodTrucksAPI, FoodTrucksItemsAPI, FoodTrucksLocationAPI, FoodTrucksNameAPI
 from .views.foodtrucks.frontend import FoodTrucksLocationMap
 from .views.auth.api import UserAPI, UserLoginAPI, UserRegisterAPI
+import graphene
+from graphene_sqlalchemy import SQLAlchemyObjectType, SQLAlchemyConnectionField
+from flask_graphql import GraphQLView
+from .views.foodtrucks.api import schema
 
 
 migrate = Migrate()
@@ -140,7 +144,7 @@ def create_app():
         migrate.init_app(app, db)
         app.logger.addHandler(handler)
 
-        # register views
+        # register RESTful views
         register_get_api(app, RootAPI, 'root_api', '/')
         register_api(app, FoodTrucksAPI, 'foodtrucks_api', '/foodtrucks/', pk='truck_id')
         register_get_api(app, FoodTrucksNameAPI, 'foodtrucks_name_api', '/foodtrucks/name/', pk='needle', pk_type='string')
@@ -150,6 +154,9 @@ def create_app():
         register_get_api(app, UserAPI, 'user_api', '/auth/user')
         register_post_api(app, UserRegisterAPI, 'user_register_api', '/auth/register')
         register_post_api(app, UserLoginAPI, 'user_login_api', '/auth/login')
+
+        # register GraphQL views
+        app.add_url_rule('/graphql', view_func=GraphQLView.as_view('graphql', schema=schema, graphiql=True))
         
         # register blueprints
         app.register_blueprint(error_handlers)

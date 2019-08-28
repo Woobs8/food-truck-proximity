@@ -3,6 +3,8 @@ from application import create_app
 from application.models import FoodTruck, User, db
 from test_data import test_data, test_users
 import json
+from graphene.test import Client
+from application.views.foodtrucks.api.GraphQL import schema
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -88,3 +90,10 @@ def token(app, client):
     data = ret.get_json()
     return data['auth_token']
     
+
+@pytest.fixture()
+def graphql_client():
+    """
+    A test fixture for creating a GraphQL test client
+    """
+    return Client(schema)
