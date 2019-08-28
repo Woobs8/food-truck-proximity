@@ -1,7 +1,9 @@
 from flask import request, jsonify, abort, make_response, Blueprint, current_app
-from application.models import FoodTruck, db
+from application.models import FoodTruck, User, db
 from sqlalchemy.exc import SQLAlchemyError
 from flask.views import MethodView
+from application.views.authentication import get_token_from_header, get_user_id_from_token
+
 
 class FoodTrucksAPI(MethodView):
     """
@@ -62,6 +64,16 @@ class FoodTrucksAPI(MethodView):
         Returns:
             str: JSON representation of the created resource
         """
+        # get authentication token from request header
+        auth_token = get_token_from_header()
+
+        # return unauthorized if token is not present
+        if not auth_token:
+            abort(401, 'A valid token must be included')
+
+        # get the user_id from the token
+        user_id = get_user_id_from_token(auth_token)
+
         # get the POST data
         post_data = request.get_json()
 
@@ -93,15 +105,16 @@ class FoodTrucksAPI(MethodView):
                 longitude = longitude,
                 latitude = latitude,
                 days_hours = days_hours,
-                food_items = food_items
+                food_items = food_items,
+                user_id = user_id
             )
             db.session.add(truck)
             db.session.commit()
-            current_app.logger.info('successfully inserted entry with id %d', truck.uuid)
+            current_app.logger.info('successfully inserted food truck entry with id %d', truck.uuid)
             return make_response(jsonify(truck.serialize()), 201)
         except SQLAlchemyError as e:
             db.session.rollback()
-            current_app.logger.error('error inserting entry (%s, %d, %d, %s, %s): %s', 
+            current_app.logger.error('error inserting food truck entry (%s, %d, %d, %s, %s): %s', 
                             name, latitude, longitude, days_hours, food_items, e)
             abort(500, 'Error creating resource')
     
@@ -118,6 +131,16 @@ class FoodTrucksAPI(MethodView):
         Returns:
             str: JSON representation of updated or created resource
         """
+        # get authentication token from request header
+        auth_token = get_token_from_header()
+
+        # return unauthorized if token is not present
+        if not auth_token:
+            abort(401, 'A valid token must be included')
+
+        # get the user_id from the token
+        user_id = get_user_id_from_token(auth_token)
+    
         # get the POST data
         post_data = request.get_json()
 
@@ -153,25 +176,28 @@ class FoodTrucksAPI(MethodView):
                     longitude = longitude,
                     latitude = latitude,
                     days_hours = days_hours,
-                    food_items = food_items
+                    food_items = food_items,
+                    user_id = user_id
                 )
                 truck.uuid = truck_id
                 db.session.add(truck)
             # truck exists, so it is updated
             else:
-                truck.name = name
-                truck.longitude = longitude
-                truck.latitude = latitude
-                truck.days_hours = days_hours
-                truck.food_items = food_items
-            
+                if truck.user_id == user_id or User.is_admin(user_id):
+                    truck.name = name
+                    truck.longitude = longitude
+                    truck.latitude = latitude
+                    truck.days_hours = days_hours
+                    truck.food_items = food_items
+                else:
+                    abort(401, 'Not authorized to modify this resource')
             # commit changes to database
             db.session.commit()
-            current_app.logger.info('successfully updated entry id %d', truck_id)
+            current_app.logger.info('successfully updated food truck entry id %d', truck_id)
             return make_response(jsonify(truck.serialize()), 200)
         except SQLAlchemyError as e:
             db.session.rollback()
-            current_app.logger.error('error updating entry id %d: %s', truck_id, e)
+            current_app.logger.error('error updating food truck entry id %d: %s', truck_id, e)
             abort(500, 'Error updating resource with id {}'.format(truck_id))
     
 
@@ -185,14 +211,30 @@ class FoodTrucksAPI(MethodView):
         Returns:
             str: JSON response with success message
         """
+        # get authentication token from request header
+        auth_token = get_token_from_header()
+
+        # return unauthorized if token is not present
+        if not auth_token:
+            abort(401, 'A valid token must be included')
+
+        # get the user_id from the token
+        user_id = get_user_id_from_token(auth_token)
+
         # delete truck with id if it exists
         try:
-            FoodTruck.query.filter_by(uuid=truck_id).delete()
-            db.session.commit()
-            current_app.logger.info('successfully deleted entry id %d', truck_id)
-            return make_response(jsonify({'message': 'Entry deleted'}), 200)
+            truck = FoodTruck.query.filter_by(uuid=truck_id).first()
+            if truck:
+                if truck.user_id == user_id or User.is_admin(user_id):
+                    FoodTruck.query.filter_by(uuid=truck_id).delete()
+                    db.session.commit()
+                    current_app.logger.info('successfully deleted food truck entry id %d', truck_id)
+                    return make_response(jsonify({'message': 'Entry deleted'}), 200)
+                else:
+                    abort(401, 'Not authorized to modify this resource')
+            else:
+                return make_response(jsonify({'message': 'Entry deleted'}), 200)
         except SQLAlchemyError as e:
             db.session.rollback()
-            current_app.logger.error('error deleting entry id %d: %s', truck_id, e)
-            abort(500, 'Error deleting resource with id {}'.format(truck_id))
-
+            current_app.logger.error('error deleting food truck entry id %d: %s', truck_id, e)
+            abort(500, 'Error deleting resource with id {}'.format(truck_id))   

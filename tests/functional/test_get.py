@@ -103,7 +103,7 @@ class TestGetEmptyDB():
         assert len(data) == 0
 
 
-@pytest.mark.usefixtures('create_db', 'populate_db')
+@pytest.mark.usefixtures('create_db', 'populate_food_truck_db')
 class TestGet():
     """
     Test cases for validating the GET endpoints of the application with a populated database. 

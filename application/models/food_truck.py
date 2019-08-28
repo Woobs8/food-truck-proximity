@@ -3,10 +3,7 @@ from sqlalchemy.ext.hybrid import hybrid_method
 from sqlalchemy import func
 from sqlalchemy.orm import aliased
 from flask_sqlalchemy import SQLAlchemy
-
-
-db = SQLAlchemy()
-
+from . import db, User
 
 class FoodTruck(db.Model):
     """
@@ -54,14 +51,16 @@ class FoodTruck(db.Model):
     latitude = db.Column(db.Float(), index=True)
     days_hours = db.Column(db.String())
     food_items = db.Column(db.String())
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=True, default=None)
 
 
-    def __init__(self, name, longitude, latitude, days_hours, food_items):
+    def __init__(self, name, longitude, latitude, days_hours, food_items, user_id):
         self.name = name
         self.longitude = longitude
         self.latitude = latitude
         self.days_hours = days_hours
         self.food_items = food_items
+        self.user_id = user_id
 
 
     def __repr__(self):
@@ -78,7 +77,7 @@ class FoodTruck(db.Model):
             'longitude': self.longitude,
             'latitude':self.latitude,
             'days_hours':self.days_hours,
-            'food_items':self.food_items
+            'food_items':self.food_items        
         }
 
 

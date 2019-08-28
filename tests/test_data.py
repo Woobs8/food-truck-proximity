@@ -1,3 +1,5 @@
+import datetime
+
 # location used for test requests
 test_location = (37.7201, -122.3886)
 
@@ -151,4 +153,17 @@ test_data = [
     "name": "Liang Bai Ping", 
     "uuid": 17
   }
+]
+
+test_users = [
+    {
+        'username': 'admin',
+        'password': '1234321',
+        'admin': True
+    },
+    {
+        'username': 'user1',
+        'password': '1234',
+        'admin': False
+    },
 ]
