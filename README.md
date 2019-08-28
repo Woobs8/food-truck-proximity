@@ -1,7 +1,5 @@
 # food-truck-proximity
-An application for locating food trucks in San Francisco. The application is developed as the backend track of the [Uber coding challenge](https://github.com/uber-archive/coding-challenge-tools/blob/master/coding_challenge.md).
-
-The repo is authored by Thomas Hallager Pedersen. For more info refer to [Linkedin](https://www.linkedin.com/in/thomas-hallager-pedersen-69642bb7/).
+An application for locating food trucks in San Francisco based on the public [dataset](https://data.sfgov.org/Economy-and-Community/Mobile-Food-Facility-Permit/rqzj-sfat). The application is inspired by the [Uber coding challenge](https://github.com/uber-archive/coding-challenge-tools/blob/master/coding_challenge.md) and is used as a personal hobby project to explore various technologies.
 
 The structure of the repository is as follows:
 - [`application`](https://github.com/Woobs8/food-truck-proximity/tree/master/application): implementation of the web application
@@ -112,6 +110,18 @@ Given the initial API requirements, the API has the following endpoints:
 
 The detailed API documentation is included in a [separate document](docs/api_documentation.pdf). The format is inspired by the documentation of the Uber [Riders API](https://developer.uber.com/docs/riders/references/api).
 
+#### Authentication
+The application uses a simple authentication scheme based on JSON web tokens (JWT) that protects the POST, PUT and DELETE API endpoints. The system works by having clients register themselves to the service using a _username_ and _password_. The user is then created and stored in a _Users_ database. After registration, a client will be able to request a JWT by logging in, which prompts the service to return a JWT on successful login. The client can then use the JWT to access the API. The JWT is only valid for a set duration, after which a new login is required. Since each issued JWT is associated with a user, the service can associate a request with a user when a JWT is included.
+
+By adding a _user_ columns to the database of food trucks, and filling that column with the user id retrieved from the JWT in the POST or PUT request that created the entry, each entry is associated with the user that created it. The service is then be able to restrict POST/PUT/DELETE access to a given resource to a specific user.
+
+The architecture of the authentication scheme is shown below, including a sequence diagram illustrating the proposed authentication procedure for a client:
+
+<p float="left">
+    <img src="docs/img/service_architecture_with_auth.png" width="350" alt="Tech Stack"/>
+    <img src="docs/img/auth_sequence.png" width="500" alt="Tech Stack"/>
+</p>
+
 ## Testing
 The test setup uses the `pytest` package, as it is the one recommended by the Flask [documentation](http://flask.pocoo.org/docs/1.0/testing/).
 
@@ -136,29 +146,13 @@ The frontend demo can be found at the endpoint [`/foodtrucks/location/map`](http
     <img src="docs/img/frontend_demo.png" width=100% alt="Tech Stack"/>
 </p>
 
-## Omissions, Considerations and Future Work
-### Authentication
-The most glaring omission is the lack of authentication. I did develop a design for the authentication procedure, but I was unfortunately not able to include it due to time constraints. Whether the GET request should be protected by authentication is dependent on the system, but the POST, PUT and DELETE API endpoints should definitely be protected by authentication to protect the data from misuse and malicious attacks.
 
-My intention was to use JSON web tokens (JWT) to authenticate requests. The system works by having clients register themselves to the service using a _username_ and _password_. The user is then created and stored in a _Users_ database. After registration, a client will be able to request a JWT by logging in, which prompts the service to return a JWT on successful login. The client can then use the JWT to access the API. The JWT is only valid for a set duration, after which a new login is required. Since each issued JWT is associated with a user, the service can associate a request with a user when a JWT is included.
-
-By adding a _user_ columns to the database of food trucks, and filling that column with the user id retrieved from the JWT in the POST or PUT request that created the entry, each entry would be associated with the user that created it. The service would then be able to restrict POST/PUT/DELETE access to a given resource to a specific user.
-
-The proposed architecture of the service with authentication is shown below, including a sequence diagram illustrating the proposed authentication procedure for a client:
-
-<p float="left">
-    <img src="docs/img/service_architecture_with_auth.png" width="350" alt="Tech Stack"/>
-    <img src="docs/img/auth_sequence.png" width="500" alt="Tech Stack"/>
-</p>
-
-### Query by Business Hours
-I would have liked to add a feature for querying by food trucks that are open at a specified time of day, but due to the unspecified format of the _dayshours_ field in the original data, it is not a trivial query. Alternatively, the data model should be changed to allow for a simpler query. I consider this a nice-to-have feature, so due to these complications, I decided to give it low priority and unfortunately did not get around to it because of time constraints.
-
+## Future Work
 ### Database Optimization
-More time should be dedicated to investigating optimization of the database queries. The database currently indexes the _latitude_ and _longitude_ fields for faster lookup, but I did not have the time to investigate the actual effectiveness of this. Additionally, _haversine_ computations are performed for all elements in the database currently. A more efficient appraoch may be to assume a planar surface and do a simple range query on the _latitude_ and _longitude_. The output of this query can then be further filtered by the actual spherical distance using the _haversine_ function. This would reduce the number of _haversine_ distance computations, and may be more efficient, but this would have to be investigated further.
+More time should be dedicated to investigating optimization of the database queries. Currently, _haversine_ computations are performed for all elements in the database. A more efficient appraoch may be to assume a planar surface and do a simple range query on the _latitude_ and _longitude_. The output of this query can then be further filtered by the actual spherical distance using the _haversine_ function. This would reduce the number of _haversine_ distance computations, and may be more efficient, but this would have to be investigated further.
 
 ### Scalability
-I have not addressed scalability explicitly in the design of the application, but I did consider some potential design improvements that would improve scalability. I did not include these, since I was not certain I had considered all edge-cases and wanted to adhere to the spirit of the challenge that focuses on production readiness.
+I have not addressed scalability explicitly in the design of the application, but I have considered some potential design improvements that would improve scalability.
 
 #### Issue: How to Handle Expansion of Geographical Area
 The original dataset is limited to San Francisco, but the service does not limit the food truck locations to just this area as clients can POST food trucks located anywhere in the world. If one were to consider expanding the service for worldwide adoption, using a single database table to store all trucks in the world is not a good idea, and a different approach is required.
@@ -181,8 +175,6 @@ The cache of a given request would have to invalidated whenever its return resul
 Initially, my approach was to imagine the service as a part of a larger system based on a micro-service architecture. The idea was motivated by wanting the system to be both scalable and extendable. In this system, the `food-truck-proximity` service would only be responsible for exposing an API for querying food trucks in proximity to a location while another service `food-truck-register` would expose an API for getting, adding, updating and deleting food trucks. The `food-truck-register` service would then notiy the `food-truck-proximity` service whenever changes occur, so it can update its database accordingly. New features can then be added to the system by adding additional services.
 
 An API gateway would be used to mimic a monolithic application from the perspective of the client. The API gateway would also enforce the client authentication.
-
-I quickly realized that I would not have the time to develop each of the services sufficiently, and scrapped the idea for a monolithic approach, but I have included my initial design for discussion purposes.
 
 <p align="center">
     <img src="docs/img/microservice_architecture.png" width="550" alt="Tech Stack"/>

@@ -1,5 +1,5 @@
 import pytest
-from application.haversine import haversine
+from application.utils.haversine import haversine
 
 
 def test_haversine():
