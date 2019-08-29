@@ -110,6 +110,10 @@ Given the initial API requirements, the API has the following endpoints:
 
 The detailed API documentation is included in a [separate document](docs/api_documentation.pdf). The format is inspired by the documentation of the Uber [Riders API](https://developer.uber.com/docs/riders/references/api).
 
+#### GraphQL
+For experimental purposes, a GraphQL API has been added to the `/graphql` endpoint. The GraphQL api serves the `foodtrucks` resource, supports CRUD operations, and requires authentication for write operations. It does not currently support location-based filtering.
+
+
 #### Authentication
 The application uses a simple authentication scheme based on JSON web tokens (JWT) that protects the POST, PUT and DELETE API endpoints. The system works by having clients register themselves to the service using a _username_ and _password_. The user is then created and stored in a _Users_ database. After registration, a client will be able to request a JWT by logging in, which prompts the service to return a JWT on successful login. The client can then use the JWT to access the API. The JWT is only valid for a set duration, after which a new login is required. Since each issued JWT is associated with a user, the service can associate a request with a user when a JWT is included.
 
